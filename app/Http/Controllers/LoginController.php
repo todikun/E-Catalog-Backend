@@ -47,7 +47,7 @@ class LoginController extends Controller
                     'status' => 'error',
                     'message' => 'Gagal login!',
                     'error' => 'Invalid credentials'
-                ]);
+                ], 401);
             }
 
             // --- Refactored token generation ---
@@ -81,18 +81,45 @@ class LoginController extends Controller
         }
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        auth::logout();
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Sukses Logout!'
-        ]);
+
+        try {
+            $message = [];
+
+            // Invalidate Access Token
+            try {
+                JWTAuth::setToken($request->token)->invalidate();
+                $message[] = 'Access token dihapus';
+            } catch (\Throwable $e) {
+                $message[] = 'Access token tidak valid';
+            }
+
+            // Invalidate Refresh Token
+            try {
+                JWTAuth::setToken($request->refreshToken)->invalidate();
+                $message[] = 'Refresh token dihapus';
+            } catch (\Throwable $th) {
+                $message[] = 'Refresh token tidak valid';
+            }
+
+            return response()->json([
+                'status' => 'Success',
+                'message' => $message
+            ],200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal logout!',
+                'error' => 'AccessToken dan RefreshToken tidak ada'
+            ], 500);
+        }
     }
+
 
     public function refresh(Request $request)
     {
-        $refreshToken = $request->input('refresh_token');
+        $refreshToken = $request->input('refreshToken');
 
         if (!$refreshToken) {
             return response()->json([
@@ -105,8 +132,8 @@ class LoginController extends Controller
             // Parse and authenticate the refresh token
             $user = JWTAuth::setToken($refreshToken)->authenticate();
 
-            if (!$user){
-                 return response()->json([
+            if (!$user) {
+                return response()->json([
                     'status'  => 'error',
                     'message' => 'Invalid refresh token.'
                 ], 401);

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Facades\JWTAuth as FacadesJWTAuth;
 
 class ForgotPasswordController extends Controller
 {
@@ -46,7 +47,6 @@ class ForgotPasswordController extends Controller
     {
         $request->validate([
             'token' => 'required',
-            'email' => 'required|email',
             'password' => 'required',
             'confirm_password' => 'required',
         ]);
@@ -68,13 +68,15 @@ class ForgotPasswordController extends Controller
             // Find user by ID
             $account = Accounts::find($userId);
 
-            if (!$account || strcasecmp($account->username, $request->email) !== 0) {
+            if (!$account) {
                 return response()->json(['message' => 'Invalid token or email'], 400);
             }
 
             // Update password
             $account->password = bcrypt($request->password);
             $account->save();
+
+            FacadesJWTAuth::setToken($request->token)->invalidate();
 
             return response()->json(['message' => 'Password successfully reset']);
         } catch (TokenExpiredException $e) {
