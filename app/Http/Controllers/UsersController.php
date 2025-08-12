@@ -8,6 +8,7 @@ use App\Services\UserService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UsersController extends Controller
 {
@@ -86,6 +87,17 @@ class UsersController extends Controller
     public function getUserById($id)
     {
         try {
+
+            $token = JWTAuth::parseToken();
+            $payload = $token->getPayload();
+            $payloadId = $payload['sub'];
+
+            if ($payloadId !== $id){
+                return response()->json([
+                    'status'=> 'error',
+                    'message'=> 'Unauthorize Access'
+                ],401);
+            }
 
             $getUser = $this->userService->checkUserIfExist($id);
             if (is_null($getUser)) {

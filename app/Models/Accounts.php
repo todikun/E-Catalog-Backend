@@ -23,7 +23,7 @@ class Accounts extends Model implements JWTSubject, AuthenticatableContract
 
     public function getJWTIdentifier()
     {
-        return $this->getKey();
+        return $this->user_id;
     }
 
     public function getJWTCustomClaims()
@@ -34,5 +34,9 @@ class Accounts extends Model implements JWTSubject, AuthenticatableContract
     public function getEmailForVerification()
     {
         return $this->email;
+    }
+
+    public function user(){
+        return $this->belongsTo(Users::class,'user_id');
     }
 }

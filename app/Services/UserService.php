@@ -14,7 +14,11 @@ class UserService
 
     public function checkUserIfExist($userId)
     {
-        return Users::where('id', $userId)->whereNull('email_verified_at')->first();
+        // return Users::where('id', $userId)->whereNull('email_verified_at')->first();
+        return Users::join('accounts', 'users.id', '=', 'accounts.user_id')
+            ->where('users.id', $userId)
+            ->whereNull('users.email_verified_at')
+            ->select('users.*')->first();
     }
 
     public function listUser()

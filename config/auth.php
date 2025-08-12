@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Accounts;
+use App\Models\Users;
+
 return [
 
     /*
@@ -35,10 +38,11 @@ return [
     |
     */
 
+    // Since JWT token subject is now users.id, the guard must be change to users
     'guards' => [
         'api' => [
             'driver' => 'jwt',
-            'provider' => 'accounts',
+            'provider' => 'users',
         ],
     ],
 
@@ -60,15 +64,14 @@ return [
     */
 
     'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => Users::class
+        ],
         'accounts' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Accounts::class,
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+            'model' => Accounts::class
+        ]
     ],
 
     /*
@@ -86,6 +89,7 @@ return [
     |
     */
 
+    // sinces the password is at the Accounts model
     'passwords' => [
         'accounts' => [
             'provider' => 'accounts',
@@ -111,7 +115,7 @@ return [
     'jwt' => [
         'secret' => env('JWT_SECRET'),
         'ttl' => env('JWT_TTL', 60), // 1 hour
-        'refresh_ttl' => env('JWT_REFRESH_TTL', 20160), // 2 weeks
+        'refresh_ttl' => env('JWT_REFRESH_TTL', 4320), // 2 weeks
     ],
 
 ];

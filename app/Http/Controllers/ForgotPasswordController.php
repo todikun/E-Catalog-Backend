@@ -66,7 +66,7 @@ class ForgotPasswordController extends Controller
             }
 
             // Find user by ID
-            $account = Accounts::find($userId);
+            $account = Accounts::where('user_id',$userId)->first();
 
             if (!$account) {
                 return response()->json(['message' => 'Invalid token or email'], 400);

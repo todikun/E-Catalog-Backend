@@ -106,7 +106,7 @@ class LoginController extends Controller
             return response()->json([
                 'status' => 'Success',
                 'message' => $message
-            ],200);
+            ], 200);
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => 'error',
@@ -129,39 +129,24 @@ class LoginController extends Controller
         }
 
         try {
-            // Parse and authenticate the refresh token
-            $user = JWTAuth::setToken($refreshToken)->authenticate();
-
-            if (!$user) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Invalid refresh token.'
-                ], 401);
-            }
-
-            // Create a new access token
-            $newAccessToken = JWTAuth::fromUser($user);
+            // Use Tymon's refresh method
+            $newToken = JWTAuth::setToken($refreshToken)->refresh();
 
             return response()->json([
-                'status'  => 'success',
-                'message' => 'Access token refreshed successfully.',
-                'token'  => $newAccessToken,
-                'refreshToken' => $refreshToken, // optionally rotate
-                'data'          => $user
-            ]);
-        } catch (JWTException $e) {
+                'status' => 'success',
+                'message' => 'Access token refreshed successfully',
+                'data' => [
+                    'access_token' => $newToken,
+                    'refresh_token' => $refreshToken // Keep same refresh token
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
             return response()->json([
-                'status'  => 'error',
-                'message' => 'Could not refresh access token.'
+                'status' => 'error',
+                'message' => 'Could not refresh access token',
+                'error' => $th->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'berhasil refresh!',
-            'token' => Auth::refresh(),
-            'data' => Auth::user()
-        ]);
     }
 
     public function checkRole()
