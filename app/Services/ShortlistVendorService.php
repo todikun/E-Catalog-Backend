@@ -157,13 +157,28 @@ class ShortlistVendorService
             ->select('id', 'data_vendor_id', 'shortlist_vendor_id', 'nama_vendor', 'pemilik_vendor', 'alamat', 'kontak', 'sumber_daya')
             ->first();
 
+        if (!$query) {
+            return [
+                'id_vendor' => null,
+                'identifikasi_kebutuhan' => [
+                    'material' => [],
+                    'peralatan' => [],
+                    'tenaga_kerja' => []
+                ]
+            ];
+        }
+
         $identifikasi = [
             'material' => [],
             'peralatan' => [],
             'tenaga_kerja' => []
         ];
 
-        $sumberDaya = explode(';', $query['sumber_daya']);
+        if (!empty($query->sumber_daya)) {
+            $sumberDaya = explode(';', $query->sumber_daya);
+        } else {
+            $sumberDaya = [];
+        }
 
         foreach ($sumberDaya as $value) {
             if (count($query['material'])) {
@@ -192,7 +207,7 @@ class ShortlistVendorService
         }
 
         $resultData = [
-            'id_vendor' => $query['data_vendor_id'],
+            'id_vendor' => $query->data_vendor_id,
             'identifikasi_kebutuhan' => $identifikasi
         ];
 
@@ -216,9 +231,26 @@ class ShortlistVendorService
 
     public function saveUrlPdf($vendorId, $shortlistVendorId, $url)
     {
+
+        $dataVendor = DataVendor::find($vendorId);
+        if (!$dataVendor) {
+            throw new \Exception("DataVendor with id $vendorId not found.");
+        }
+
+        $namaVendor = $dataVendor->nama_vendor;
+        $pemilikVendor = $dataVendor->nama_pic;
+        $alamat = $dataVendor->alamat;
+        $no_telepon = $dataVendor->no_telepon ?? $dataVendor->no_hp;
+
         $data = ShortlistVendor::updateOrCreate(
             ['data_vendor_id' => $vendorId, 'shortlist_vendor_id' => $shortlistVendorId],
-            ['url_kuisioner' => $url]
+            [
+                'url_kuisioner' => $url,
+                'nama_vendor' => $namaVendor,
+                'pemilik_vendor' => $pemilikVendor,
+                'alamat' => $alamat,
+                'kontak' => $no_telepon
+            ]
         );
         return $data['url_kuisioner'];
     }

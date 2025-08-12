@@ -124,7 +124,7 @@ class PerencanaanDataController extends Controller
                     'status' => 'error',
                     'message' => 'Gagal mendapatkan data dengan id ' . $id,
                     'data' => []
-                ]);
+                ], 404);
             }
             return response()->json([
                 'status' => 'success',
@@ -172,7 +172,7 @@ class PerencanaanDataController extends Controller
                     'peralatan' => $peralatanResult,
                     'tenaga_kerja' => $tenagaKerjaResult,
                 ]
-            ]);
+            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -381,7 +381,24 @@ class PerencanaanDataController extends Controller
         $idInformasiUmum = $request->query('informasi_umum_id');
         $idShortlistVendor = $request->query('id');
 
+        if (!$idInformasiUmum || !$idShortlistVendor) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Missing required parameters',
+                'data' => null
+            ], 400);
+        }
+
         $queryData = $this->shortlistVendorService->getIdentifikasiByShortlist($idShortlistVendor, $idInformasiUmum);
+
+        // Check if queryData is null
+        if (is_null($queryData)) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'No data found',
+                'data' => []
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

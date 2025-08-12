@@ -17,6 +17,7 @@
         "phpoffice/phpspreadsheet": "^3.4",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
+        "spatie/laravel-google-cloud-storage": "^2.3",
         "tymon/jwt-auth": "*"
     },
     "require-dev": {
