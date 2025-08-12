@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 
 class ForgotPasswordController extends Controller
 {
@@ -24,7 +26,7 @@ class ForgotPasswordController extends Controller
                 'status' => 'error',
                 'message' => 'user tidak ditemukan!',
                 'data' => []
-            ]);
+            ], 404);
         }
 
         $token = JWTAuth::fromUser($users);
@@ -50,16 +52,35 @@ class ForgotPasswordController extends Controller
         ]);
 
         try {
-            $users = JWTAuth::authenticate($request->token);
 
-            if (!$users || $users->email !== $request->email) {
+            if ($request->password !== $request->confirm_password) {
+                return response()->json(['message' => 'Password and Confirm Password do not match'], 400);
+            }
+
+            // Decode token to get user ID
+            $payload = JWTAuth::setToken($request->token)->getPayload();
+            $userId = $payload->get('sub'); // usually the user ID
+
+            if (!$userId) {
+                return response()->json(['message' => 'Token missing user ID'], 400);
+            }
+
+            // Find user by ID
+            $account = Accounts::find($userId);
+
+            if (!$account || strcasecmp($account->username, $request->email) !== 0) {
                 return response()->json(['message' => 'Invalid token or email'], 400);
             }
 
-            $users->password = bcrypt($request->password);
-            $users->save();
+            // Update password
+            $account->password = bcrypt($request->password);
+            $account->save();
 
             return response()->json(['message' => 'Password successfully reset']);
+        } catch (TokenExpiredException $e) {
+            return response()->json(['message' => 'Token has expired'], 401);
+        } catch (TokenInvalidException $e) {
+            return response()->json(['message' => 'Invalid token'], 401);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Could not reset password'], 500);
         }

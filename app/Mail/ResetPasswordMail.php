@@ -51,12 +51,15 @@ class ResetPasswordMail extends Mailable
 
     public function build()
     {
-        $url = route('password.reset', ['token' =>$this->token, 'email' => $this->email]);
+        // Routing to the Frontend URL including token and email in URL
+        $frontendURL = env('FRONT_END_URL', 'http://localhost:3000/reset-password')
+            . '?token=' . urlencode($this->token)
+            . '&email=' . urlencode($this->email);
 
         return $this->view('emails.reset_password')
-        ->with([
-            'url' => $url,
-        ])
-        ->subject('Reset Password');
+            ->with([
+                'url' => $frontendURL,
+            ])
+            ->subject('Reset Password');
     }
 }

@@ -15,7 +15,7 @@ return [
 
     'defaults' => [
         'guard' => 'api',
-        'passwords' => 'users',
+        'passwords' => 'accounts',
 ],
 
     /*
@@ -38,7 +38,7 @@ return [
     'guards' => [
         'api' => [
             'driver' => 'jwt',
-            'provider' => 'users',
+            'provider' => 'accounts',
         ],
     ],
 
@@ -60,7 +60,7 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'accounts' => [
             'driver' => 'eloquent',
             'model' => App\Models\Accounts::class,
         ],
@@ -87,9 +87,9 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
-            'table' => 'password_resets',
+        'accounts' => [
+            'provider' => 'accounts',
+            'table' => 'accounts',
             'expire' => 60,
             'throttle' => 60,
         ],
