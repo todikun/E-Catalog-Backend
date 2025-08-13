@@ -441,6 +441,11 @@ class PerencanaanDataController extends Controller
                     'data' => $changeStatus
                 ]);
             }
+
+            return response()->json([
+                'status' => 'gagal',
+                'message' => "Data tidak ditemukan"
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',

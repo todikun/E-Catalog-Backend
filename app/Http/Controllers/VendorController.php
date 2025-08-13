@@ -76,13 +76,13 @@ class VendorController extends Controller
                 'status' => 'success',
                 'message' => 'Data Vendor berhasil disimpan',
                 'data' => $vendor
-            ]);
+            ],201);
         } catch (\Exception $th) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Gagal menyimpan data vendor',
                 'error' => $th->getMessage()
-            ]);
+            ],400);
         }
     }
 }
