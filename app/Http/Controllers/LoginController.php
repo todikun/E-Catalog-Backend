@@ -50,7 +50,7 @@ class LoginController extends Controller
                 ], 401);
             }
 
-            // --- Refactored token generation ---
+            // --- based from the auth.php guards ---
             $account = auth('api')->user();
 
             // Get the role from the service and add it as a custom claim
@@ -59,6 +59,7 @@ class LoginController extends Controller
 
             // Generate a short-lived access token (1 hours)
             JWTAuth::factory()->setTTL(60);
+            // insert the CustomClaims and get the sub from getJWTIdentifier() in Accounts model
             $accessToken = JWTAuth::customClaims($customClaims)->fromUser($account);
 
             // Generate a long-lived refresh token (3 days)

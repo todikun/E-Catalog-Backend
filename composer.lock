@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "be02f1f59bf1e1b2c9c3b53ecd76d7d5",
+    "content-hash": "8d063138b90281af86ef27c8d7472c59",
     "packages": [
         {
             "name": "brick/math",
@@ -1161,6 +1161,57 @@
             "description": "Google Cloud PHP shared dependency, providing functionality useful to all components.",
             "support": {
                 "source": "https://github.com/googleapis/google-cloud-php-core/tree/v1.64.1"
+            },
+            "time": "2025-07-18T20:06:03+00:00"
+        },
+        {
+            "name": "google/cloud-secret-manager",
+            "version": "v2.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/googleapis/google-cloud-php-secret-manager.git",
+                "reference": "5b9a08407e9241ee2a38b295ea9c7e590e61bd8a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/googleapis/google-cloud-php-secret-manager/zipball/5b9a08407e9241ee2a38b295ea9c7e590e61bd8a",
+                "reference": "5b9a08407e9241ee2a38b295ea9c7e590e61bd8a",
+                "shasum": ""
+            },
+            "require": {
+                "google/gax": "^1.36.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.0"
+            },
+            "suggest": {
+                "ext-grpc": "Enables use of gRPC, a universal high-performance RPC framework created by Google.",
+                "ext-protobuf": "Provides a significant increase in throughput over the pure PHP protobuf implementation. See https://cloud.google.com/php/grpc for installation instructions."
+            },
+            "type": "library",
+            "extra": {
+                "component": {
+                    "id": "cloud-secret-manager",
+                    "path": "SecretManager",
+                    "entry": null,
+                    "target": "googleapis/google-cloud-php-secret-manager.git"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Google\\Cloud\\SecretManager\\": "src",
+                    "GPBMetadata\\Google\\Cloud\\Secrets\\": "metadata",
+                    "GPBMetadata\\Google\\Cloud\\Secretmanager\\": "metadata"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Secret Manager Client for PHP",
+            "support": {
+                "source": "https://github.com/googleapis/google-cloud-php-secret-manager/tree/v2.1.1"
             },
             "time": "2025-07-18T20:06:03+00:00"
         },

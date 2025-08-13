@@ -21,6 +21,7 @@ class Accounts extends Model implements JWTSubject, AuthenticatableContract
         'password'
     ];
 
+    // Get the id from user_id
     public function getJWTIdentifier()
     {
         return $this->user_id;
