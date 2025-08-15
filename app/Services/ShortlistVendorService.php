@@ -144,6 +144,7 @@ class ShortlistVendorService
         ])
             ->where('shortlist_vendor.id', $id)
             ->where(function ($query) use ($idShortlistVendor) {
+                // Relationship Filtering 
                 $query->whereHas('material', function ($subQuery) use ($idShortlistVendor) {
                     $subQuery->where('identifikasi_kebutuhan_id', $idShortlistVendor);
                 })
@@ -168,6 +169,8 @@ class ShortlistVendorService
             ];
         }
 
+        // dd($query->toArray(true));
+
         $identifikasi = [
             'material' => [],
             'peralatan' => [],
@@ -175,10 +178,12 @@ class ShortlistVendorService
         ];
 
         if (!empty($query->sumber_daya)) {
-            $sumberDaya = explode(';', $query->sumber_daya);
+            $sumberDaya = explode(',', $query->sumber_daya);
         } else {
             $sumberDaya = [];
         }
+
+        // dd($sumberDaya);
 
         foreach ($sumberDaya as $value) {
             if (count($query['material'])) {

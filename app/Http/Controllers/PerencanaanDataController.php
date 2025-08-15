@@ -8,6 +8,7 @@ use App\Services\IdentifikasiKebutuhanService;
 use App\Services\ShortlistVendorService;
 use App\Services\PerencanaanDataService;
 use App\Services\GeneratePdfService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PerencanaanDataController extends Controller
@@ -182,22 +183,22 @@ class PerencanaanDataController extends Controller
         }
     }
 
-    public function getAllDataVendor($id)
+    public function getAllDataVendor($identifikasiKebutuhanId)
     {
-        $dataVendor = $this->shortlistVendorService->getDataVendor($id);
+        $dataVendor = $this->shortlistVendorService->getDataVendor($identifikasiKebutuhanId);
         if ($dataVendor) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'Data berhasil didapat!',
                 'data' => $dataVendor
-            ]);
+            ],200);
         }
 
         return response()->json([
             'status' => 'error',
             'message' => 'Data tidak dapat ditemukan!',
             'data' => []
-        ]);
+        ],404);
     }
 
     public function selectDataVendor(Request $request)
@@ -220,15 +221,20 @@ class PerencanaanDataController extends Controller
                 'errors' => $validator->errors()
             ]);
         }
+
+        DB::beginTransaction();
         try {
             $shortlistVendorId = $request->identifikasi_kebutuhan_id;
             $dataShortlistvendor = [];
             foreach ($request->shortlist_vendor as $shortlistVendor) {
+                // * shortListVendorId = identifikasi_kebutuhan_id from table "informasi_umum";
                 $dataShortlistvendor[] = $this->shortlistVendorService->storeShortlistVendor($shortlistVendor,  $shortlistVendorId);
             }
 
             $this->perencanaanDataService->updatePerencanaanData($shortlistVendorId, 'shortlist_vendor', $shortlistVendorId);
             $this->perencanaanDataService->changeStatusPerencanaanData(config('constants.STATUS_PERENCANAAN'), $shortlistVendorId);
+            
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
@@ -239,6 +245,7 @@ class PerencanaanDataController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => 'error',
                 'message' => 'Gagal menyimpan data!',
@@ -379,7 +386,7 @@ class PerencanaanDataController extends Controller
     public function getShortlistVendorSumberDaya(Request $request)
     {
         $idInformasiUmum = $request->query('informasi_umum_id');
-        $idShortlistVendor = $request->query('id');
+        $idShortlistVendor = $request->query('shortlist_vendor_id');
 
         if (!$idInformasiUmum || !$idShortlistVendor) {
             return response()->json([
@@ -397,14 +404,14 @@ class PerencanaanDataController extends Controller
                 'status' => 'success',
                 'message' => 'No data found',
                 'data' => []
-            ]);
+            ],404);
         }
 
         return response()->json([
             'status' => 'success',
             'message' => 'Data berhasil didapat!',
             'data' => $queryData
-        ]);
+        ],200);
     }
 
     public function getIdentifikasiKebutuhanStored($informasiUmumId)

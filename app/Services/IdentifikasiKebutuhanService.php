@@ -12,11 +12,11 @@ class IdentifikasiKebutuhanService
     {
         $material = Material::updateOrCreate(
             [
+                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'nama_material' => $dataMaterial['nama_material'],
                 'spesifikasi' => $dataMaterial['spesifikasi'],
             ],
             [
-                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'satuan' => $dataMaterial['satuan'],
                 'ukuran' => $dataMaterial['ukuran'],
                 'kodefikasi' => $dataMaterial['kodefikasi'],
@@ -35,11 +35,11 @@ class IdentifikasiKebutuhanService
     {
         $peralatan = Peralatan::updateOrCreate(
             [
+                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'nama_peralatan' => $dataPeralatan['nama_peralatan'],
                 'spesifikasi' => $dataPeralatan['spesifikasi'],
             ],
             [
-                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'satuan' => $dataPeralatan['satuan'],
                 'kapasitas' => $dataPeralatan['kapasitas'],
                 'kodefikasi' => $dataPeralatan['kodefikasi'],
@@ -58,11 +58,11 @@ class IdentifikasiKebutuhanService
     {
         $tenagaKerja = TenagaKerja::updateOrCreate(
             [
+                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'jenis_tenaga_kerja' => $dataTenagaKerja['jenis_tenaga_kerja'],
                 'kodefikasi' => $dataTenagaKerja['kodefikasi'],
             ],
             [
-                'identifikasi_kebutuhan_id' => $identifikasiKebutuhanId,
                 'satuan' => $dataTenagaKerja['satuan'],
                 'jumlah_kebutuhan' => $dataTenagaKerja['jumlah_kebutuhan'],
                 'provincies_id' => $dataTenagaKerja['provincies_id'],
