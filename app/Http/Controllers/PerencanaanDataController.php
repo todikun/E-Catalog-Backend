@@ -233,7 +233,7 @@ class PerencanaanDataController extends Controller
 
             $this->perencanaanDataService->updatePerencanaanData($shortlistVendorId, 'shortlist_vendor', $shortlistVendorId);
             $this->perencanaanDataService->changeStatusPerencanaanData(config('constants.STATUS_PERENCANAAN'), $shortlistVendorId);
-            
+
             DB::commit();
 
             return response()->json([
