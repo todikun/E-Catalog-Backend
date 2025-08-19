@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\DataVendor;
+use App\Models\SumberDayaVendor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VendorController extends Controller
 {
@@ -48,7 +50,7 @@ class VendorController extends Controller
 
     public function inputVendor(Request $request)
     {
-
+        DB::beginTransaction();
         try {
 
             if ($request->hasFile('logo_url') && $request->hasFile('dok_pendukung_url')) {
@@ -67,17 +69,34 @@ class VendorController extends Controller
             $vendor->provinsi_id = $request->provinsi_id;
             $vendor->kota_id = $request->kota_id;
             $vendor->koordinat = $request->koordinat;
-            $vendor->logo_url = ($filePathLogo) ? $filePathLogo : "-";;
-            $vendor->dok_pendukung_url = ($filePathDokPendukung) ? $filePathDokPendukung : "-";;
+            $vendor->logo_url = "-";
+            $vendor->dok_pendukung_url = "-";
+            $vendor->logo_url = ($filePathLogo) ? $filePathLogo : "-";
+            $vendor->dok_pendukung_url = ($filePathDokPendukung) ? $filePathDokPendukung : "-";
             $vendor->sumber_daya = $request->sumber_daya;
             $vendor->save();
 
+            $datas = [];
+            foreach ($request->sumber_daya as $key => $types) {
+                foreach($types as $value) {
+                    $datas[] = [
+                        'data_vendor_id' => $vendor->id,
+                        'jenis' => $key,
+                        'nama' => $value['nama'],
+                        'spesifikasi' => $value['spesifikasi']
+                    ];
+                }
+            }
+            SumberDayaVendor::insert($datas);
+
+            DB::commit();
             return response()->json([
                 'status' => 'success',
                 'message' => 'Data Vendor berhasil disimpan',
                 'data' => $vendor
             ],201);
         } catch (\Exception $th) {
+            DB::rollBack();
             return response()->json([
                 'status' => 'error',
                 'message' => 'Gagal menyimpan data vendor',
