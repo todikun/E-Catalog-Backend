@@ -19,24 +19,29 @@ class ShortlistVendorService
         ])->select('identifikasi_kebutuhan_id')->where('identifikasi_kebutuhan_id', $id)
             ->get();
 
-        $identifikasikebutuhan = $getDataIdentifikasi->flatMap(function ($item) {
+        $phrases = $getDataIdentifikasi->flatMap(function ($item) {
+                $materials   = optional($item->material)->pluck('nama_material')->filter();
+                $peralatans  = optional($item->peralatan)->pluck('nama_peralatan')->filter();
+                $tenagaKerja = optional($item->tenagaKerja)->pluck('jenis_tenaga_kerja')->filter();
 
-            //$materials = $item->material->pluck('nama_material')->toArray();
-            $materials = $item->material->map(function ($material) {
-                return "{$material->nama_material} {$material->spesifikasi} {$material->ukuran}";
-            })->toArray();
+                return $materials->concat($peralatans)->concat($tenagaKerja);
+            });
 
-            //$peralatans = $item->peralatan->pluck('nama_peralatan')->toArray();
-            $peralatans = $item->peralatan->map(function ($peralatan) {
-                return "{$peralatan->nama_peralatan} {$peralatan->spesifikasi} {$peralatan->kapasitas}";
-            })->toArray();
+            // Ubah jadi keywords: kata1 atau kata1+kata2
+            $keywords = $phrases->flatMap(function ($str) {
+                $parts = preg_split('/\s+/u', trim((string) $str));
+                if (!$parts || $parts[0] === '') return [];
+                $out = [$parts[0]];                         // kata pertama
+                if (count($parts) > 1) $out[] = $parts[0].' '.$parts[1]; // kata1+kata2
+                return $out;
+            })
+            ->map(fn ($s) => trim(preg_replace('/\s+/u', ' ', $s))) // normalisasi spasi
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
-            $tenagaKerjas = $item->tenagaKerja->pluck('jenis_tenaga_kerja')->toArray();
-
-            return array_merge($materials, $peralatans, $tenagaKerjas);
-        });
-
-        return $identifikasikebutuhan->toArray();
+        return $keywords;
     }
 
     public function getDataVendor($id)
@@ -57,24 +62,26 @@ class ShortlistVendorService
         }
 
         $result = [];
-        foreach ($dataVendors as $item) {
-            $jenisVendorIdArray = $jenisVendorIdArray = $item->jenis_vendor_id;
-            foreach ($jenisVendorIdArray as $value) {
-                $key = match ($value) {
-                    1 => 'material',
-                    2 => 'peralatan',
-                    3 => 'tenaga_kerja'
-                };
-                $result[$key][] = [
-                    'id' => $item->id,
-                    'nama_vendor' => $item->nama_vendor,
-                    'pemilik_vendor' => $item->nama_pic,
-                    'alamat' => $item->alamat,
-                    'kontak' => $item->no_telepon,
-                    'sumber_daya' => $item->sumber_daya,
-                    'material_id' => $item->material_id,
-                    'peralatan_id' => $item->peralatan_id,
-                    'tenaga_kerja_id' => $item->tenaga_kerja_id
+
+        foreach ($queryDataVendors as $vendor) {
+            $grouped = collect($vendor->sumber_daya_vendor)->groupBy('jenis');
+
+            foreach ($grouped as $jenis => $list) {
+                $result[$jenis][] = [
+                    'id' => $vendor->id,
+                    'nama_vendor' => $vendor->nama_vendor,
+                    'pemilik' => $vendor->nama_pic,
+                    'alamat' => $vendor->alamat,
+                    'kontak' => $vendor->no_telepon,
+                    'sumber_daya' => $vendor->sumber_daya,
+                    'sumber_daya_vendor' => $list->map(function ($sd) {
+                        return [
+                            'id'          => $sd['id'],
+                            'jenis'       => $sd['jenis'],
+                            'nama'        => $sd['nama'],
+                            'spesifikasi' => $sd['spesifikasi']
+                        ];
+                    })->toArray()
                 ];
             }
         }
@@ -144,7 +151,7 @@ class ShortlistVendorService
         ])
             ->where('shortlist_vendor.id', $id)
             ->where(function ($query) use ($idShortlistVendor) {
-                // Relationship Filtering 
+                // Relationship Filtering
                 $query->whereHas('material', function ($subQuery) use ($idShortlistVendor) {
                     $subQuery->where('identifikasi_kebutuhan_id', $idShortlistVendor);
                 })
