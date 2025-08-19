@@ -69,8 +69,6 @@ class VendorController extends Controller
             $vendor->provinsi_id = $request->provinsi_id;
             $vendor->kota_id = $request->kota_id;
             $vendor->koordinat = $request->koordinat;
-            $vendor->logo_url = "-";
-            $vendor->dok_pendukung_url = "-";
             $vendor->logo_url = ($filePathLogo) ? $filePathLogo : "-";
             $vendor->dok_pendukung_url = ($filePathDokPendukung) ? $filePathDokPendukung : "-";
             $vendor->sumber_daya = $request->sumber_daya;
