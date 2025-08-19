@@ -31,6 +31,10 @@ class Users extends Model implements JWTSubject, AuthenticatableContract
         return $this->belongsTo(SatuanBalaiKerja::class, 'balai_kerja_id');
     }
 
+    public function role(){
+        return $this->belongsTo(Roles::class,'id_roles', 'id');
+    }
+
      // Get the id from user_id
     public function getJWTIdentifier()
     {

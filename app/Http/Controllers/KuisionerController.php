@@ -2,65 +2,118 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PerencanaanData;
-use App\Services\GeneratePdfServiceChange;
-use Exception;
-use Illuminate\Http\Request;
+use App\Models\Material;
+use App\Models\Peralatan;
+use App\Models\ShortlistVendor;
+use App\Models\TenagaKerja;
+use App\Services\InformasiUmumService;
 
 class KuisionerController extends Controller
 {
 
-    /**
-     * Metode untuk membuat dan menggabungkan PDF kuisioner untuk semua vendor
-     * dalam satu perencanaan berdasarkan filter string yang diberikan.
-     *
-     * @param Request $request
-     * @param GeneratePdfService $pdfService
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function generateKuisionerPdf(Request $request, GeneratePdfServiceChange $pdfService)
+    protected $informasiUmumService;
+
+    public function __construct(InformasiUmumService $informasi_umum_service)
     {
-        try {
-            // Validasi data input. Sekarang menerima string.
-            $request->validate([
-                'perencanaan_id' => 'required|integer',
-                'material' => 'sometimes|string',
-                'peralatan' => 'sometimes|string',
-                'tenaga_kerja' => 'sometimes|string',
-            ]);
+        $this->informasiUmumService = $informasi_umum_service;
+    }
 
-            $perencanaanId = $request->input('perencanaan_id');
-            
-            // Mengambil filter sebagai string dari request.
-            $materialFilter = $request->input('material', '');
-            $peralatanFilter = $request->input('peralatan', '');
-            $tenagaKerjaFilter = $request->input('tenaga_kerja', '');
+    public function getInformasiUmum($idInformasiUmum)
+    {
+        $informasiUmumData = $this->informasiUmumService->getDataInformasiUmumById($idInformasiUmum);
 
-            // Ambil data perencanaan dengan eager loading relasi yang dibutuhkan
-            $perencanaan = PerencanaanData::with('shortlistVendor.data_vendor')->find($perencanaanId);
-
-            if (!$perencanaan) {
-                return response()->json(['message' => 'Data perencanaan tidak ditemukan.'], 404);
-            }
-
-            // Panggil metode generateAllVendorsPdf dari service dengan filter string
-            $urls = $pdfService->generateAllVendorsPdf(
-                $perencanaan, 
-                $materialFilter, 
-                $peralatanFilter, 
-                $tenagaKerjaFilter
-            );
-
+        if (is_null($informasiUmumData)) {
             return response()->json([
-                'message' => 'PDF kuisioner berhasil dibuat untuk vendor yang relevan.',
-                'urls' => $urls
-            ]);
-
-        } catch (Exception $e) {
-            // Tangani exception jika terjadi kesalahan
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat membuat PDF: ' . $e->getMessage()
-            ], 500);
+                'status' => 'gagal',
+                'message' => 'Data kosong',
+                'data' => []
+            ], 404);
         }
+
+        return response()->json([
+            'status' => 'berhasil',
+            'message' => 'Data berhasil diambil',
+            'data' => $informasiUmumData
+        ], 200);
+    }
+
+    public function getMaterial($identifikasiKebutuhanId)
+    {
+        $materialData = Material::where("identifikasi_kebutuhan_id", $identifikasiKebutuhanId)->get();
+
+        if ($materialData->isEmpty()) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Data kosong',
+                'data' => []
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'berhasil',
+            'message' => 'Data berhasil diambil',
+            'data' => $materialData
+        ]);
+    }
+
+
+    public function getPeralatan($identifikasiKebutuhanId)
+    {
+        $peralatanData = Peralatan::where('identifikasi_kebutuhan_id', $identifikasiKebutuhanId)->get();
+
+        if ($peralatanData->isEmpty()) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Data kosong',
+                'data' => []
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'berhasil',
+            'message' => 'Data berhasil diambil',
+            'data' => $peralatanData
+        ]);
+    }
+
+    public function getTenagaKerja($identifikasiKebutuhanId)
+    {
+        $tenagaKerjaData = TenagaKerja::where('identifikasi_kebutuhan_id', $identifikasiKebutuhanId)->get();
+        if ($tenagaKerjaData->isEmpty()) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Data kosong',
+                'data' => []
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'berhasil',
+            'message' => 'Data berhasil diambil',
+            'data' => $tenagaKerjaData
+        ], 200);
+    }
+
+    public function getShortListVendor($shortListVendorId)
+    {
+        // IdentifikasiKebutuhanId sama persis dengan shortListVendorId
+        $shortListVendorData = ShortlistVendor::where('shortlist_vendor_id', $shortListVendorId)->get();
+        if ($shortListVendorData->isEmpty()) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Data kosong',
+                'data' => []
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'berhasil',
+            'message' => 'Data berhasil diambil',
+            'data' => $shortListVendorData
+        ], 200);
+    }
+
+    public function generatePdf($shortListVendorId){
+        
     }
 }

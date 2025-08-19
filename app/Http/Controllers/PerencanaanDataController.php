@@ -78,7 +78,7 @@ class PerencanaanDataController extends Controller
                 'status' => 'error',
                 'message' => 'validasi gagal!',
                 'data' => []
-            ]);
+            ],404);
         }
 
         // $checkNamaPaket = $this->informasiUmumService->checkNamaPaket($request->nama_paket);
@@ -481,7 +481,7 @@ class PerencanaanDataController extends Controller
                 'status' => 'error',
                 'message' => config('constants.ERROR_MESSAGE_GET'),
                 'data' => []
-            ]);
+            ],404);
         }
     }
 }

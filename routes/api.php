@@ -75,8 +75,12 @@ Route::get('/perencanaan-data/shortlist-detail-identifikasi', [PerencanaanDataCo
 Route::post('/perencanaan-data/adjust-identifikasi-kebutuhan', [PerencanaanDataController::class, 'adjustShortlistVendor']);
 Route::post('/perencanaan-data/save-perencanaan-data/{id}', [PerencanaanDataController::class, 'changeStatusPerencanaan']);
 Route::get('/perencanaan-data/table-list-prencanaan-data', [PerencanaanDataController::class, 'tableListPerencanaan']);
-Route::get('/perencanaan-data/get-kuisioner/{id}', [KuisionerController::class, 'getKuisionerByPerencanaanDataId']);
-
+Route::get('/perencanaan-data/get-kuisioner-informasi-umum/{id}', [KuisionerController::class, 'getInformasiUmum']);
+Route::get('/perencanaan-data/get-kuisioner-material/{id}',[KuisionerController::class,'getMaterial']);
+Route::get('/perencanaan-data/get-kuisioner-peralatan/{id}',[KuisionerController::class,'getPeralatan']);
+Route::get('/perencanaan-data/get-kuisioner-tenaga-kerja/{id}',[KuisionerController::class,'getTenagaKerja']);
+Route::get('/perencanaan-data/get-kuisioner-short-list-vendor/{id}',[KuisionerController::class,'getShortListVendor']);
+Route::post('perencanaan-data/generate-pdf-sunting/{id}',[KuisionerController::class,'generatePdf']);
 
 
 Route::get('/test-email', function () {
