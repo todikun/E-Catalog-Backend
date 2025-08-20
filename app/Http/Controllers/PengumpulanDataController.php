@@ -50,6 +50,8 @@ class PengumpulanDataController extends Controller
             $arrayAnggota = explode(',', $request->input('anggota'));
             $arrayAnggota = array_map('intval', $arrayAnggota);
 
+            dd($arrayAnggota);
+
             $data = [
                 'nama_team' => $request->input('nama_team'),
                 'ketua_team' => $request->input('ketua_team'),
@@ -152,6 +154,7 @@ class PengumpulanDataController extends Controller
         }
     }
 
+    // TODO: Change to Google Cloud Storage Bucket for Storing the sk_penugasan
     public function storePengawas(Request $request)
     {
         $rules = [
@@ -172,6 +175,7 @@ class PengumpulanDataController extends Controller
             $data = [];
 
             if ($request->hasFile('sk_penugasan')) {
+                // Change it using Google Cloud Storage Bucket
                 $filePath = $request->file('sk_penugasan')->store('public/sk_penugasan');
             }
 
@@ -202,20 +206,29 @@ class PengumpulanDataController extends Controller
     public function listUser(Request $request)
     {
         $roles = $this->pengumpulanDataService->getListRoles($request['role']);
+
+        if (empty($roles)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => config('constants.ERROR_MESSAGE_GET'),
+                'error' => 'Role tidak terdefinisi'
+            ], 400);
+        }
+
         $getData = $this->pengumpulanDataService->listUserPengumpulan($roles);
         if ($getData) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $getData
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
+            ], 200);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 400);
     }
 
     public function storePetugasLapangan(Request $request)
@@ -386,13 +399,20 @@ class PengumpulanDataController extends Controller
 
         try {
             $assign = $this->pengumpulanDataService->assignPenugasan('pengawas', $request->id_user, $request->pengumpulan_data_id);
-            if ($assign) {
+
+            if (empty($assign)) {
                 return response()->json([
-                    'status' => 'success',
-                    'message' => config('constants.SUCCESS_MESSAGE_SAVE'),
+                    'status' => 'gagal',
+                    'message' => config('constants.ERROR_MESSAGE_SAVE'),
                     'data' => $assign
-                ]);
+                ], 400);
             }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => config('constants.SUCCESS_MESSAGE_SAVE'),
+                'data' => $assign
+            ], 200);
         } catch (\Exception $th) {
             return response()->json([
                 'status' => 'error',

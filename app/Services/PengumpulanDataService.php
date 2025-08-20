@@ -59,18 +59,26 @@ class PengumpulanDataService
 
     public function listUserPengumpulan($role)
     {
-        return Users::select('id AS user_id', 'nama_lengkap')
+
+        $query = Users::select('id AS user_id', 'nama_lengkap')
             ->where('status', 'active')
             ->where('id_roles', $role)
             ->whereNotNull('email_verified_at')
             ->whereNot('id_roles', 1)->get();
+
+
+        return $query;
     }
 
     public function getListRoles($rolesString)
     {
         $role = Roles::select('id')
             ->where('nama', $rolesString)->first();
-        return $role['id'];
+
+        if ($role) {
+            return $role->id;
+        }
+        return [];
     }
 
     public function listPenugasan($table)
@@ -153,7 +161,15 @@ class PengumpulanDataService
     public function assignPenugasan($table, $idTable, $idPerencanaan)
     {
         $array = explode(',', $idTable);
-        $array = array_map('intval', $array);
+        $arrayPerson = array_map('intval', $array);
+
+        // Todo: Check if the user is exists
+        $userExists = Users::whereIn('id', $array)->get();
+        $countUserExists = $userExists->count();
+
+        if (count($arrayPerson) != $countUserExists) {
+            return [];
+        }
 
         if ($table == 'pengawas') {
             return PerencanaanData::updateOrCreate(

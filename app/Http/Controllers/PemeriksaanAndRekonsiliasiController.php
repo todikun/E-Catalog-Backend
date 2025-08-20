@@ -45,6 +45,7 @@ class PemeriksaanAndRekonsiliasiController extends Controller
 
     public function getDataPemeriksaanRekonsiliasi($shortlistId)
     {
+        // using primary key ID from shortlist_vendor table
         $getData = $this->pengumpulanDataService->getEntriData($shortlistId);
         $pemeriksaanData = $this->pengumpulanDataService->getPemeriksaanDataList($getData['data_vendor_id'], $getData['identifikasi_kebutuhan_id']);
 
