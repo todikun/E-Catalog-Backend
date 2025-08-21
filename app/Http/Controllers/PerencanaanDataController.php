@@ -332,7 +332,7 @@ class PerencanaanDataController extends Controller
         }
 
         try {
-            $shortlistVendorId = $request['shortlist_vendor_id'];
+            $shortlistVendorId = $request['shortlist_vendor_id']; // id dari identifikasi kebutuhan
             $vendorId = $request['id_vendor'];
             $material = [];
             $peralatan = [];

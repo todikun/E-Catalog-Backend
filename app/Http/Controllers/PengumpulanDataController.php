@@ -47,10 +47,22 @@ class PengumpulanDataController extends Controller
                 $filePath = $request->file('sk_penugasan')->store('sk_penugasan');
             }
 
-            $arrayAnggota = explode(',', $request->input('anggota'));
+            $ketua = (int) $request->input('ketua_team');
+            $sekretaris = (int) $request->input('sekretaris_team');
+            $arrayPetinggi = array_merge([$ketua], [$sekretaris]);
+
+            $arrayAnggota = array_merge(explode(',', $request->input('anggota')));
             $arrayAnggota = array_map('intval', $arrayAnggota);
 
-            dd($arrayAnggota);
+            $duplicates = array_intersect($arrayPetinggi, $arrayAnggota);
+
+            if (!empty($duplicates)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Ketua atau Sekretaris tidak boleh rangkap menjadi anggota',
+                    'error' => "Duplicate Data"
+                ], 400);
+            }   
 
             $data = [
                 'nama_team' => $request->input('nama_team'),

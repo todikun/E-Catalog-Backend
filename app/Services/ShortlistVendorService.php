@@ -70,7 +70,7 @@ class ShortlistVendorService
                 $result[$jenis][] = [
                     'id' => $vendor->id,
                     'nama_vendor' => $vendor->nama_vendor,
-                    'pemilik' => $vendor->nama_pic,
+                    'pemilik_vendor' => $vendor->nama_pic,
                     'alamat' => $vendor->alamat,
                     'kontak' => $vendor->no_telepon,
                     'sumber_daya' => $vendor->sumber_daya,
