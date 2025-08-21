@@ -20,5 +20,11 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+
+        $this->call(insert_data_jenis_dan_kategori_vendor::class);
+        $this->call(RolesSeeder::class);
+        $this->call(UnorSeeder::class);
+        $this->call(BalaiKerjaSeeder::class);
+        $this->call(UsersSeeder::class);
     }
 }
