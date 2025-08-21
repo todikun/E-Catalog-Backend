@@ -15,7 +15,7 @@ class Users extends Model implements JWTSubject, AuthenticatableContract
     use HasFactory, Notifiable, AuthAuthenticatable;
 
 
-    protected $fillable = ['id_roles', 'nama_lengkap', 'no_handphone', 'nik', 'nrp', 'satuan_kerja_id', 'balai_kerja_id', 'status'];
+    protected $fillable = ['id_roles', 'nama_lengkap', 'no_handphone', 'nik', 'nrp', 'nip', 'satuan_kerja_id', 'balai_kerja_id', 'status', 'user_id_sipasti', 'email',];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
