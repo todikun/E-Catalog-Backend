@@ -3,12 +3,15 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use App\Helpers\Helper;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Firebase\JWT\ExpiredException;
-use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Firebase\JWT\BeforeValidException;
 use Illuminate\Support\Facades\Config;
@@ -50,32 +53,58 @@ class VerifySipastiJwt
             return response()->json(['error' => 'Invalid token'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $claims = [
-            'user_id_sipasti' => $decoded->sub ?? null,
-            'name'            => $decoded->name ?? 'Unknown',
-            'email'           => $decoded->email ?? null,
-            'role'            => $decoded->role ?? null,
-            'nik'             => $decoded->nik  ?? null,
-            'nrp'             => $decoded->nrp  ?? null,
-            'no_hp'           => $decoded->no_hp ?? null,
-        ];
+        $baseUrl = rtrim(env('SIPASTI_BASE_URL'), '/');
 
-        if (!$claims['user_id_sipasti'] && !$claims['email']) {
-            return response()->json(['error' => 'Invalid claims'], Response::HTTP_UNAUTHORIZED);
+        $resp = Http::withToken($token)->acceptJson()->get("$baseUrl/auth/profile");
+        dd($resp->json());
+        if ($resp->ok()) {
+            return $resp->json('data') ?? $resp->json();
         }
 
-        $cacheKey = 'user_profile_model:' . ($claims['user_id_sipasti'] ?: 'email:' . $claims['email']);
 
-        $model = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($claims) {
-            return User::updateOrCreate(
-                ['user_id_sipasti' => $claims['user_id_sipasti']],
+        $profile = Cache::remember("sipasti:profile:{$decoded->sub}", now()->addMinutes(30), function () use ($baseUrl, $token) {
+            $resp = Http::withToken($token)->acceptJson()->get("$baseUrl/auth/profile");
+            if ($resp->ok()) {
+                return $resp->json('data') ?? $resp->json();
+            }
+
+            abort(response()->json(['error' => 'Cannot fetch profile from SIPASTI'], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED));
+        });
+
+        $roleMap  = Helper::getRoleMap();
+        $guestId  = $roleMap['guest'] ?? null;
+        $rawRole  = Str::lower((string)($profile['role'] ?? ''));
+        $roleName = match (true) {
+            Str::contains($rawRole, 'kepala balai') => 'PJ Balai',
+            $rawRole === 'superadmn'                => 'superadmin',
+            default                                 => 'guest',
+        };
+        $roleId = $roleMap[$roleName] ?? $guestId;
+
+        $userIdSipasti = (string)($profile['id'] ?? $decoded->sub ?? '');
+        $email         = isset($profile['email']) ? trim($profile['email']) : null;
+        if ($userIdSipasti === '' && !$email) {
+            return response()->json(['error' => 'Invalid profile payload'], 401);
+        }
+
+        $cacheKey = 'user_profile_model:' . ($userIdSipasti ?: 'email:' . $email);
+        $model = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($userIdSipasti, $email, $profile, $roleId) {
+            $balaiKerja = \App\Models\SatuanBalaiKerja::where('nama', 'like', "%{$profile['unit_kerja']}%")->first();
+
+            $where = $userIdSipasti !== '' ? ['user_id_sipasti' => $userIdSipasti] : ['email' => $email];
+            return \App\Models\Users::updateOrCreate(
+                $where,
                 [
-                    'name' => $claims['name'],
-                    'email'=> $claims['email'],
-                    'role' => $claims['role'],
-                    'nik'  => $claims['nik'],
-                    'nrp'  => $claims['nrp'],
-                    'no_hp'=> $claims['no_hp'],
+                    'nama_lengkap'  => $profile['name'],
+                    'email'         => $email,
+                    'no_handphone'  => isset($profile['phone']) ? $profile['phone'] : null,
+                    'nik'           => isset($profile['detail']) ? $profile['detail']['nik'] : $profile['nik'] ?? null,
+                    'nrp'           => isset($profile['detail']) ? $profile['detail']['nrp'] : $profile['nrp'] ?? null,
+                    'nip'           => isset($profile['detail']) ? $profile['detail']['nip'] : $profile['nip'] ?? null,
+                    'id_roles'       => $roleId,
+                    'status'        => 'active',
+                    'balai_kerja_id' => $balaiKerja ? $balaiKerja->id : null,
+                    'user_id_sipasti' => $userIdSipasti
                 ]
             );
         });
@@ -84,14 +113,18 @@ class VerifySipastiJwt
 
         $request->attributes->add([
             'auth_user' => [
-                'id'               => $model->id,
-                'user_id_sipasti'  => $model->user_id_sipasti,
-                'name'             => $model->name,
-                'email'            => $model->email,
-                'role'             => $model->role,
-                'nik'              => $model->nik,
-                'nrp'              => $model->nrp,
-                'no_hp'            => $model->no_hp,
+                'id' => $model->id,
+                'nama_lengkap' => $model->nama_lengkap,
+                'email' => $model->email,
+                'no_handphone' => $model->no_handphone,
+                'nik' => $model->nik,
+                'nrp' => $model->nrp,
+                'nip' => $model->nip,
+                'id_roles' => $model->role_id,
+                'status' => $model->status,
+                'balai_kerja_id' => $model->balai_kerja_id,
+                'satuan_kerja_id' => $model->satuan_kerja_id,
+                'user_id_sipasti' => $model->user_id_sipasti
             ],
         ]);
 

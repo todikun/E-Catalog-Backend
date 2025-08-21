@@ -47,9 +47,4 @@ class DataVendor extends Model
     {
         return $this->belongsTo(KategoriVendor::class, 'kategori_vendors_id', 'id');
     }
-
-    public function sumber_daya_vendor()
-    {
-        return $this->hasMany(SumberDayaVendor::class, 'data_vendor_id', 'id');
-    }
 }
