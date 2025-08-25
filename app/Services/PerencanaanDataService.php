@@ -6,7 +6,7 @@ use App\Models\PerencanaanData;
 
 class PerencanaanDataService
 {
-    public function listAllPerencanaanData($id)
+    public function listAllPerencanaanData($informasiUmumId)
     {
         $query = PerencanaanData::with([
             'informasiUmum',
@@ -18,7 +18,8 @@ class PerencanaanDataService
             'tenagaKerja.cities',
             'shortlistVendor'
         ])
-            ->where('informasi_umum_id', $id)->first();
+            ->where('informasi_umum_id', $informasiUmumId)->first();
+
 
         if ($query) {
             $query->material = $query->material->map(function ($item) {

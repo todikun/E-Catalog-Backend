@@ -295,9 +295,9 @@ class PerencanaanDataController extends Controller
 
     public function perencanaanDataResult(Request $request)
     {
-        $id = $request->query('id');
+        $informasiUmumId = $request->query('id');
 
-        $data = $this->perencanaanDataService->listAllPerencanaanData($id);
+        $data = $this->perencanaanDataService->listAllPerencanaanData($informasiUmumId);
 
         if (!isset($data)) {
             return response()->json([

@@ -35,6 +35,10 @@ use Illuminate\Support\Facades\Mail;
 //     return $request->user();
 // });
 
+Route::get('/hello-nginx-vm', function(){
+    return response()->json(['message' => "Hello World Nginx VM"]);
+});
+
 Route::post('/store-user', [UsersController::class, 'store']);
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout']);
