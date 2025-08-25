@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('nik')->nullable()->change();
             $table->string('nrp')->nullable()->change();
             $table->string('surat_penugasan_url')->nullable()->change();
-            $table->string('nip')->nullable()->change();
+            // $table->string('nip')->nullable()->change();
 
             $table->uuid('user_id_sipasti')->index()->nullable();
         });
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->string('nik')->nullable(false)->change();
             $table->string('nrp')->nullable(false)->change();
             $table->string('surat_penugasan_url')->nullable(false)->change();
-            $table->string('nip')->nullable(false)->change();
+            // $table->string('nip')->nullable(false)->change();
 
             $table->dropIndex(['user_id_sipasti']);
             $table->dropColumn('user_id_sipasti');

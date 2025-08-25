@@ -63,5 +63,8 @@ return new class extends Migration
     public function down()
     {
         Schema::dropIfExists('survey_kuisoner');
+        Schema::dropIfExists('material_survey');
+        Schema::dropIfExists('peralatan_survey');
+        Schema::dropIfExists('tenaga_kerja_survey');
     }
 };
