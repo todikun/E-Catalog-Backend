@@ -6,6 +6,8 @@ use App\Services\PengumpulanDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
+use function PHPUnit\Framework\throwException;
+
 class SurveyKuisionerController extends Controller
 {
     protected $pengumpulanDataService;
@@ -41,6 +43,10 @@ class SurveyKuisionerController extends Controller
 
         $data = json_decode(Crypt::decryptString($token), true);
 
+        if (!$data || !isset($data['timestamp'], $data['shortlist_id'])) {
+            throw new \Exception('Token tidak valid atau rusak');
+        }
+
         $timestamp = $data['timestamp'];
         $shortlistId = $data['shortlist_id'];
 
@@ -66,7 +72,7 @@ class SurveyKuisionerController extends Controller
                 'status' => 'error',
                 'message' => config('constants.ERROR_MESSAGE_GET'),
                 'error' => $e->getMessage()
-            ]);
+            ],404);
         }
     }
 

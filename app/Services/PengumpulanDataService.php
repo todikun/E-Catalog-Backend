@@ -66,6 +66,20 @@ class PengumpulanDataService
             ->whereNotNull('email_verified_at')
             ->whereNot('id_roles', 1)->get();
 
+        $query = $query->filter(function ($item) use ($role) {
+            $exists = false;
+
+            if ($role == 'pengawas') {
+                $exists = PerencanaanData::whereJsonContains('pengawas_id', (string) $item->user_id)->exists();
+            } elseif ($role == 'pengolah data') {
+                $exists = PerencanaanData::whereJsonContains('pengolah_data_id', (string) $item->user_id)->exists();
+            } elseif ($role == 'petugas lapangan') {
+                $exists = PerencanaanData::whereJsonContains('petugas_lapangan_id', (string) $item->user_id)->exists();
+            }
+
+            // keep hanya user yang TIDAK ditugaskan
+            return !$exists;
+        })->values(); // reset index
 
         return $query;
     }
@@ -97,7 +111,7 @@ class PengumpulanDataService
                 ->get();
 
             $data->transform(function ($item) {
-                $exists = PerencanaanData::where('pengawas_id', $item->id_user)
+                $exists = PerencanaanData::whereJsonContains('pengawas_id', (string) $item->id_user)
                     ->exists();
 
                 $item->status = $exists ? 'ditugaskan' : 'belum ditugaskan';
@@ -121,7 +135,7 @@ class PengumpulanDataService
                 ->get();
 
             $data->transform(function ($item) {
-                $exists = PerencanaanData::where('pengolah_data_id', $item->id_user)
+                $exists = PerencanaanData::whereJsonContains('pengolah_data_id', (string) $item->id_user)
                     ->exists();
 
                 $item->status = $exists ? 'ditugaskan' : 'belum ditugaskan';
@@ -145,7 +159,7 @@ class PengumpulanDataService
                 ->get();
 
             $data->transform(function ($item) {
-                $exists = PerencanaanData::where('petugas_lapangan_id', $item->id_user)
+                $exists = PerencanaanData::whereJsonContains('petugas_lapangan_id', (string) $item->id_user)
                     ->exists();
 
                 $item->status = $exists ? 'ditugaskan' : 'belum ditugaskan';
@@ -304,6 +318,10 @@ class PengumpulanDataService
             ->join('kuisioner_pdf_data', 'data_vendors.id', '=', 'kuisioner_pdf_data.vendor_id')
             ->where('shortlist_vendor.id', $shortlistId)
             ->first();
+
+        if (!$vendor) {
+            throw new \Exception("Data tidak ditemukan untuk shortlist_id: {$shortlistId}");
+        }
 
         $keteranganPetugas = $this->getKeteranganPetugas($vendor['petugas_lapangan_id']);
         $keteranganPengawas = $this->getKeteranganPetugas($vendor['pengawas_id']);
