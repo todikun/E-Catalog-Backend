@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::table('satuan_balai_kerja', function (Blueprint $table) {
 
             // TODO: 1. Ubah column menjadi nullable
-            $table->unsignedBigInteger('unor_id')->nullable()->change();
+            $table->unsignedBigInteger('unor_id')->nullable(true)->change();
         });
     }
 
