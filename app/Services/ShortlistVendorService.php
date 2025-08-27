@@ -47,27 +47,47 @@ class ShortlistVendorService
     public function getDataVendor($id)
     {
         $resultArray = $this->getIdentifikasiKebutuhanByIdentifikasiId($id);
-        //dd($resultArray);
+
+        // Normalisasi: hapus duplikat & kosong
+        $resultArray = collect($resultArray)
+            ->map(fn($s) => trim(mb_strtolower($s)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
         $queryDataVendors = DataVendor::query()
-            ->withWhereHas('sumber_daya_vendor', function ($q) use ($resultArray) {
-                $q->whereIn(DB::raw('LOWER(nama)'), $resultArray);
+            ->with(['sumber_daya_vendor' => function ($q) use ($resultArray) {
+                $q->where(function ($subQuery) use ($resultArray) {
+                    $subQuery->whereIn(DB::raw('LOWER(nama)'), $resultArray);
+
+                    foreach ($resultArray as $keyword) {
+                        $subQuery->orWhere(DB::raw('LOWER(nama)'), 'like', "%{$keyword}%");
+                    }
+                });
+            }])
+            ->whereHas('sumber_daya_vendor', function ($q) use ($resultArray) {
+                $q->where(function ($subQuery) use ($resultArray) {
+                    $subQuery->whereIn(DB::raw('LOWER(nama)'), $resultArray);
+                    foreach ($resultArray as $keyword) {
+                        $subQuery->orWhere(DB::raw('LOWER(nama)'), 'like', "%{$keyword}%");
+                    }
+                });
             })
             ->get();
 
         $result = [];
-
         foreach ($queryDataVendors as $vendor) {
             $grouped = collect($vendor->sumber_daya_vendor)->groupBy('jenis');
 
             foreach ($grouped as $jenis => $list) {
                 $result[$jenis][] = [
-                    'id' => $vendor->id,
-                    'nama_vendor' => $vendor->nama_vendor,
+                    'id'            => $vendor->id,
+                    'nama_vendor'   => $vendor->nama_vendor,
                     'pemilik_vendor' => $vendor->nama_pic,
-                    'alamat' => $vendor->alamat,
-                    'kontak' => $vendor->no_telepon,
-                    'sumber_daya' => $vendor->sumber_daya,
+                    'alamat'        => $vendor->alamat,
+                    'kontak'        => $vendor->no_telepon,
+                    'sumber_daya'   => $vendor->sumber_daya,
                     'sumber_daya_vendor' => $list->map(function ($sd) {
                         return [
                             'id'          => $sd['id'],

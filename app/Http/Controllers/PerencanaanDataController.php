@@ -191,14 +191,32 @@ class PerencanaanDataController extends Controller
                 'status' => 'success',
                 'message' => 'Data berhasil didapat!',
                 'data' => $dataVendor
-            ],200);
+            ], 200);
         }
 
         return response()->json([
             'status' => 'error',
             'message' => 'Data tidak dapat ditemukan!',
             'data' => []
-        ],404);
+        ], 404);
+    }
+
+    public function getSearchDataVendors($identifikasiKebutuhanId, Request $request)
+    {
+        $dataVendor = $this->shortlistVendorService->getDataVendor($identifikasiKebutuhanId);
+        if ($dataVendor) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil didapat!',
+                'data' => $dataVendor
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Data tidak dapat ditemukan!',
+            'data' => []
+        ], 404);
     }
 
     public function selectDataVendor(Request $request)
