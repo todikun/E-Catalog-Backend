@@ -479,13 +479,13 @@ class PengumpulanDataService
             'data_vendors.kota_id',
             'provinces.nama_provinsi',
             'cities.nama_kota',
-            'shortlist_vendor.shortlist_vendor_id As identifikasi_kebutuhan_id',
+            'shortlist_vendor.shortlist_vendor_id AS identifikasi_kebutuhan_id',
             'shortlist_vendor.petugas_lapangan_id',
             'shortlist_vendor.pengawas_id',
             'shortlist_vendor.nama_pemberi_informasi',
             'shortlist_vendor.tanggal_survei',
             'shortlist_vendor.tanggal_pengawasan',
-            'data_vendors.id As vendor_id',
+            'data_vendors.id AS vendor_id',
             'kuisioner_pdf_data.material_id',
             'kuisioner_pdf_data.peralatan_id',
             'kuisioner_pdf_data.tenaga_kerja_id',
@@ -497,46 +497,60 @@ class PengumpulanDataService
             ->where('shortlist_vendor.id', $shortlistId)
             ->first();
 
-        $keteranganPetugas = $this->getKeteranganPetugas($vendor['petugas_lapangan_id']);
-        $keteranganPengawas = $this->getKeteranganPetugas($vendor['pengawas_id']);
+        if (!$vendor) {
+            return null; // or throw exception
+        }
 
-        $material = ($vendor['material_id']) ? Material::whereIn('id', json_decode($vendor['material_id']))->get() : null;
-        $peralatan = ($vendor['peralatan_id']) ? Peralatan::whereIn('id', json_decode($vendor['peralatan_id']))->get() : null;
-        $tenagaKerja = ($vendor['tenaga_kerja_id']) ? TenagaKerja::whereIn('id', json_decode($vendor['tenaga_kerja_id']))->get() : null;
+        $keteranganPetugas = $this->getKeteranganPetugas($vendor->petugas_lapangan_id);
+        $keteranganPengawas = $this->getKeteranganPetugas($vendor->pengawas_id);
 
-        $kategoriVendor = KategoriVendor::whereIn('id', json_decode($vendor['kategori_vendor_id'], true))
-            ->select('nama_kategori_vendor as name')
-            ->get();
+        $materialIds = json_decode($vendor->material_id, true);
+        $material = is_array($materialIds) ? Material::whereIn('id', $materialIds)->get() : collect([]);
+
+        $peralatanIds = json_decode($vendor->peralatan_id, true);
+        $peralatan = is_array($peralatanIds) ? Peralatan::whereIn('id', $peralatanIds)->get() : collect([]);
+
+        $tenagaKerjaIds = json_decode($vendor->tenaga_kerja_id, true);
+        $tenagaKerja = is_array($tenagaKerjaIds) ? TenagaKerja::whereIn('id', $tenagaKerjaIds)->get() : collect([]);
+
+        $kategoriVendor = KategoriVendor::whereIn(
+            'id',
+            json_decode($vendor->kategori_vendor_id, true) ?? []
+        )->selectRaw('nama_kategori_vendor as name')->get();
+
         $stringKategoriVendor = $kategoriVendor->pluck('name')->implode(', ');
 
-        $response = [
-            'data_vendor_id' => $vendor['vendor_id'],
-            'identifikasi_kebutuhan_id' => $vendor['identifikasi_kebutuhan_id'],
-            'provinsi' => $vendor['nama_provinsi'],
-            'kota' => $vendor['nama_kota'],
-            'nama_responden' => $vendor['nama_vendor'],
-            'alamat' => $vendor['alamat'],
-            'no_telepon' => $vendor['no_telepon'],
+        return [
+            'data_vendor_id' => $vendor->vendor_id,
+            'identifikasi_kebutuhan_id' => $vendor->identifikasi_kebutuhan_id,
+            'provinsi' => $vendor->nama_provinsi,
+            'kota' => $vendor->nama_kota,
+            'nama_responden' => $vendor->nama_vendor,
+            'alamat' => $vendor->alamat,
+            'no_telepon' => $vendor->no_telepon,
             'kategori_responden' => $stringKategoriVendor,
             'keterangan_petugas_lapangan' => [
-                'nama_petugas_lapangan' => isset($keteranganPetugas['nama']) ? $keteranganPetugas['nama'] : null,
-                'nip_petugas_lapangan' => isset($keteranganPetugas['nip']) ? $keteranganPetugas['nip'] : null,
-                'tanggal_survei' => isset($vendor['tanggal_survei']) ? Carbon::createFromFormat('Y-m-d', $vendor['tanggal_survei'])->format('d-m-Y') : null,
-                'nama_pengawas' => isset($keteranganPengawas['nama']) ? $keteranganPengawas['nama'] : null,
-                'nip_pengawas' => isset($keteranganPengawas['nip']) ? $keteranganPengawas['nip'] : null,
-                'tanggal_pengawasan' => isset($vendor['tanggal_pengawasan']) ? Carbon::createFromFormat('Y-m-d', $vendor['tanggal_pengawasan'])->format('d-m-Y') : null,
+                'nama_petugas_lapangan' => $keteranganPetugas['nama'] ?? null,
+                'nip_petugas_lapangan' => $keteranganPetugas['nip'] ?? null,
+                'tanggal_survei' => $vendor->tanggal_survei
+                    ? Carbon::parse($vendor->tanggal_survei)->format('d-m-Y')
+                    : null,
+                'nama_pengawas' => $keteranganPengawas['nama'] ?? null,
+                'nip_pengawas' => $keteranganPengawas['nip'] ?? null,
+                'tanggal_pengawasan' => $vendor->tanggal_pengawasan
+                    ? Carbon::parse($vendor->tanggal_pengawasan)->format('d-m-Y')
+                    : null,
             ],
             'keterangan_pemberi_informasi' => [
-                'nama_pemberi_informasi' => isset($vendor['nama_pemberi_informasi']) ? $vendor['nama_pemberi_informasi'] : null,
-                'tanda_tangan_responden' => isset($vendor['nama_pemberi_informasi'])
-                    ? 'Ditandatangain oleh ' . $vendor['nama_pemberi_informasi'] . ' pada ' . Carbon::now()
-                    : null
+                'nama_pemberi_informasi' => $vendor->nama_pemberi_informasi ?? null,
+                'tanda_tangan_responden' => $vendor->nama_pemberi_informasi
+                    ? 'Ditandatangani oleh ' . $vendor->nama_pemberi_informasi . ' pada ' . now()->format('Y-m-d H:i:s')
+                    : null,
             ],
             'material' => $material,
             'peralatan' => $peralatan,
             'tenaga_kerja' => $tenagaKerja,
         ];
-        return $response;
     }
 
     public function updateDataVerifikasiPengawas($data)

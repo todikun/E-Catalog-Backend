@@ -62,7 +62,7 @@ class PengumpulanDataController extends Controller
                     'message' => 'Ketua atau Sekretaris tidak boleh rangkap menjadi anggota',
                     'error' => "Duplicate Data"
                 ], 400);
-            }   
+            }
 
             $data = [
                 'nama_team' => $request->input('nama_team'),
@@ -539,37 +539,38 @@ class PengumpulanDataController extends Controller
     public function listVendorByPaket($id)
     {
         $list = $this->pengumpulanDataService->listVendorByPerencanaanId($id);
-        if (isset($list)) {
+        if ($list->isNotEmpty()) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $list
             ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 404);
     }
 
     public function getEntriData($id)
     {
+        // ID from the shortlist_vendor
         $data = $this->pengumpulanDataService->getEntriData($id);
-        if (isset($data)) {
+        if ($data) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $data
             ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
         }
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 404);
     }
 
     public function entriDataSave(Request $request)

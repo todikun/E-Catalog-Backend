@@ -20,22 +20,22 @@ class ShortlistVendorService
             ->get();
 
         $phrases = $getDataIdentifikasi->flatMap(function ($item) {
-                $materials   = optional($item->material)->pluck('nama_material')->filter();
-                $peralatans  = optional($item->peralatan)->pluck('nama_peralatan')->filter();
-                $tenagaKerja = optional($item->tenagaKerja)->pluck('jenis_tenaga_kerja')->filter();
+            $materials   = optional($item->material)->pluck('nama_material')->filter();
+            $peralatans  = optional($item->peralatan)->pluck('nama_peralatan')->filter();
+            $tenagaKerja = optional($item->tenagaKerja)->pluck('jenis_tenaga_kerja')->filter();
 
-                return $materials->concat($peralatans)->concat($tenagaKerja);
-            });
+            return $materials->concat($peralatans)->concat($tenagaKerja);
+        });
 
-            // Ubah jadi keywords: kata1 atau kata1+kata2
-            $keywords = $phrases->flatMap(function ($str) {
-                $parts = preg_split('/\s+/u', trim((string) $str));
-                if (!$parts || $parts[0] === '') return [];
-                $out = [$parts[0]];                         // kata pertama
-                if (count($parts) > 1) $out[] = $parts[0].' '.$parts[1]; // kata1+kata2
-                return $out;
-            })
-            ->map(fn ($s) => trim(preg_replace('/\s+/u', ' ', $s))) // normalisasi spasi
+        // Ubah jadi keywords: kata1 atau kata1+kata2
+        $keywords = $phrases->flatMap(function ($str) {
+            $parts = preg_split('/\s+/u', trim((string) $str));
+            if (!$parts || $parts[0] === '') return [];
+            $out = [$parts[0]];                         // kata pertama
+            if (count($parts) > 1) $out[] = $parts[0] . ' ' . $parts[1]; // kata1+kata2
+            return $out;
+        })
+            ->map(fn($s) => trim(preg_replace('/\s+/u', ' ', $s))) // normalisasi spasi
             ->filter()
             ->unique()
             ->values()
@@ -49,17 +49,11 @@ class ShortlistVendorService
         $resultArray = $this->getIdentifikasiKebutuhanByIdentifikasiId($id);
         //dd($resultArray);
 
-        $queryDataVendors = DataVendor::all();
-
-        $dataVendors = [];
-        foreach ($queryDataVendors as $value) {
-            $sumberDayaArray = explode(';', $value->sumber_daya);
-
-            $resultElemination = $this->eleminationArray($resultArray, $sumberDayaArray);
-            if (!empty($resultElemination)) {
-                $dataVendors[] = $value;
-            }
-        }
+        $queryDataVendors = DataVendor::query()
+            ->withWhereHas('sumber_daya_vendor', function ($q) use ($resultArray) {
+                $q->whereIn(DB::raw('LOWER(nama)'), $resultArray);
+            })
+            ->get();
 
         $result = [];
 
@@ -138,34 +132,25 @@ class ShortlistVendorService
 
     public function getIdentifikasiByShortlist($id, $idShortlistVendor)
     {
-        $query = ShortlistVendor::with([
-            'material' => function ($subQuery) {
-                $subQuery->select('id', 'identifikasi_kebutuhan_id', 'nama_material', 'satuan', 'spesifikasi', 'merk');
+        $shortlist = ShortlistVendor::with([
+            'data_vendor.sumber_daya_vendor',
+            'material' => function ($q) use ($idShortlistVendor) {
+                $q->where('identifikasi_kebutuhan_id', $idShortlistVendor)
+                    ->select('id', 'identifikasi_kebutuhan_id', 'nama_material', 'satuan', 'spesifikasi', 'merk');
             },
-            'peralatan' => function ($subQuery) {
-                $subQuery->select('id', 'identifikasi_kebutuhan_id', 'nama_peralatan', 'satuan', 'spesifikasi', 'merk');
+            'peralatan' => function ($q) use ($idShortlistVendor) {
+                $q->where('identifikasi_kebutuhan_id', $idShortlistVendor)
+                    ->select('id', 'identifikasi_kebutuhan_id', 'nama_peralatan', 'satuan', 'spesifikasi', 'merk');
             },
-            'tenaga_kerja' => function ($subQuery) {
-                $subQuery->select('id', 'identifikasi_kebutuhan_id', 'jenis_tenaga_kerja', 'satuan');
+            'tenaga_kerja' => function ($q) use ($idShortlistVendor) {
+                $q->where('identifikasi_kebutuhan_id', $idShortlistVendor)
+                    ->select('id', 'identifikasi_kebutuhan_id', 'jenis_tenaga_kerja', 'satuan');
             }
         ])
             ->where('shortlist_vendor.id', $id)
-            ->where(function ($query) use ($idShortlistVendor) {
-                // Relationship Filtering
-                $query->whereHas('material', function ($subQuery) use ($idShortlistVendor) {
-                    $subQuery->where('identifikasi_kebutuhan_id', $idShortlistVendor);
-                })
-                    ->orWhereHas('peralatan', function ($subQuery) use ($idShortlistVendor) {
-                        $subQuery->where('identifikasi_kebutuhan_id', $idShortlistVendor);
-                    })
-                    ->orWhereHas('tenaga_kerja', function ($subQuery) use ($idShortlistVendor) {
-                        $subQuery->where('identifikasi_kebutuhan_id', $idShortlistVendor);
-                    });
-            })
-            ->select('id', 'data_vendor_id', 'shortlist_vendor_id', 'nama_vendor', 'pemilik_vendor', 'alamat', 'kontak', 'sumber_daya')
             ->first();
 
-        if (!$query) {
+        if (!$shortlist) {
             return [
                 'id_vendor' => null,
                 'identifikasi_kebutuhan' => [
@@ -176,54 +161,86 @@ class ShortlistVendorService
             ];
         }
 
-        // dd($query->toArray(true));
+        $shortlist = $shortlist->toArray();
 
-        $identifikasi = [
+        $vendor = $shortlist['data_vendor'] ?? null;
+
+        if (!$vendor) {
+            return [
+                'id_vendor' => null,
+                'identifikasi_kebutuhan' => [
+                    'material' => [],
+                    'peralatan' => [],
+                    'tenaga_kerja' => []
+                ]
+            ];
+        }
+
+        $sumberList = collect($vendor['sumber_daya_vendor'] ?? []);
+        $result = [
             'material' => [],
             'peralatan' => [],
             'tenaga_kerja' => []
         ];
 
-        if (!empty($query->sumber_daya)) {
-            $sumberDaya = explode(',', $query->sumber_daya);
-        } else {
-            $sumberDaya = [];
-        }
+        // Filter material
+        foreach ($shortlist['material'] as $mat) {
+            $namaMaterial = $mat['nama_material'];
 
-        // dd($sumberDaya);
+            $matches = $sumberList
+                ->where('jenis', 'material')
+                ->filter(fn($item) => stripos($item['nama'], $namaMaterial) !== false)
+                ->map(fn($item) => ['nama' => $item['nama'], 'spesifikasi' => $item['spesifikasi']])
+                ->values()
+                ->toArray();
 
-        foreach ($sumberDaya as $value) {
-            if (count($query['material'])) {
-                foreach ($query['material'] as $data) {
-                    if (strpos(strtolower($data['nama_material']), strtolower($value)) !== false) {
-                        $identifikasi['material'][] = $data;
-                    }
-                }
-            }
-
-            if (count($query['peralatan'])) {
-                foreach ($query['peralatan'] as $data) {
-                    if (strpos(strtolower($data['nama_peralatan']), strtolower($value)) !== false) {
-                        $identifikasi['peralatan'][] = $data;
-                    }
-                }
-            }
-
-            if (count($query['tenaga_kerja'])) {
-                foreach ($query['tenaga_kerja'] as $data) {
-                    if (strpos(strtolower($data['jenis_tenaga_kerja']), strtolower($value)) !== false) {
-                        $identifikasi['tenaga_kerja'][] = $data;
-                    }
-                }
+            if (!empty($matches)) {
+                $result['material'][] = array_merge($mat, [
+                    'tersedia_sebagai' => $matches
+                ]);
             }
         }
 
-        $resultData = [
-            'id_vendor' => $query->data_vendor_id,
-            'identifikasi_kebutuhan' => $identifikasi
+        // Filter peralatan
+        foreach ($shortlist['peralatan'] as $per) {
+            $namaPeralatan = $per['nama_peralatan'];
+
+            $matches = $sumberList
+                ->where('jenis', 'peralatan')
+                ->filter(fn($item) => stripos($item['nama'], $namaPeralatan) !== false)
+                ->map(fn($item) => ['nama' => $item['nama'], 'spesifikasi' => $item['spesifikasi']])
+                ->values()
+                ->toArray();
+
+            if (!empty($matches)) {
+                $result['peralatan'][] = array_merge($per, [
+                    'tersedia_sebagai' => $matches
+                ]);
+            }
+        }
+
+        // Filter tenaga kerja
+        foreach ($shortlist['tenaga_kerja'] as $tk) {
+            $namaTenaga = $tk['jenis_tenaga_kerja'];
+
+            $matches = $sumberList
+                ->where('jenis', 'tenaga_kerja')
+                ->filter(fn($item) => stripos($item['nama'], $namaTenaga) !== false)
+                ->map(fn($item) => ['nama' => $item['nama'], 'spesifikasi' => $item['spesifikasi']])
+                ->values()
+                ->toArray();
+
+            if (!empty($matches)) {
+                $result['tenaga_kerja'][] = array_merge($tk, [
+                    'tersedia_sebagai' => $matches
+                ]);
+            }
+        }
+
+        return [
+            'id_vendor' => $vendor['id'],
+            'identifikasi_kebutuhan' => $result
         ];
-
-        return $resultData;
     }
 
     public function saveKuisionerPdfData($idVendor, $idShortlistVendor, $material, $peralatan, $tenagaKerja)

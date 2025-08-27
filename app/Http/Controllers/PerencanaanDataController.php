@@ -78,7 +78,7 @@ class PerencanaanDataController extends Controller
                 'status' => 'error',
                 'message' => 'validasi gagal!',
                 'data' => []
-            ],404);
+            ], 404);
         }
 
         // $checkNamaPaket = $this->informasiUmumService->checkNamaPaket($request->nama_paket);
@@ -386,7 +386,7 @@ class PerencanaanDataController extends Controller
     public function getShortlistVendorSumberDaya(Request $request)
     {
         $idInformasiUmum = $request->query('informasi_umum_id');
-        $idShortlistVendor = $request->query('shortlist_vendor_id');
+        $idShortlistVendor = $request->query('id');
 
         if (!$idInformasiUmum || !$idShortlistVendor) {
             return response()->json([
@@ -404,14 +404,14 @@ class PerencanaanDataController extends Controller
                 'status' => 'success',
                 'message' => 'No data found',
                 'data' => []
-            ],404);
+            ], 404);
         }
 
         return response()->json([
             'status' => 'success',
             'message' => 'Data berhasil didapat!',
             'data' => $queryData
-        ],200);
+        ], 200);
     }
 
     public function getIdentifikasiKebutuhanStored($informasiUmumId)
@@ -481,7 +481,7 @@ class PerencanaanDataController extends Controller
                 'status' => 'error',
                 'message' => config('constants.ERROR_MESSAGE_GET'),
                 'data' => []
-            ],404);
+            ], 404);
         }
     }
 }
