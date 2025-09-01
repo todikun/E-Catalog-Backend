@@ -7,7 +7,9 @@ use App\Models\users;
 use App\Services\UserService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UsersController extends Controller
@@ -92,11 +94,11 @@ class UsersController extends Controller
             $payload = $token->getPayload();
             $payloadId = $payload['sub'];
 
-            if ($payloadId !== $id){
+            if ($payloadId !== $id) {
                 return response()->json([
-                    'status'=> 'error',
-                    'message'=> 'Unauthorize Access'
-                ],401);
+                    'status' => 'error',
+                    'message' => 'Unauthorize Access'
+                ], 401);
             }
 
             $getUser = $this->userService->checkUserIfExist($id);
@@ -143,4 +145,54 @@ class UsersController extends Controller
     }
 
     public function getRoleByToken() {}
+
+    public function listByRoleAndByBalai(Request $request)
+    {
+
+        $balaiKey = $request->query('balai_key');
+        $role = $request->query('role');
+
+        // ✅ Step 2: Validate both parameters
+        $validator = Validator::make([
+            'balai_key' => $balaiKey,
+            'role'      => $role,
+        ], [
+            'balai_key' => 'required|string|min:1',
+            'role'      => ['required', 'string', Rule::in(['pengawas', 'petugas lapangan', 'pengolah data'])],
+        ], [
+            'balai_key.required' => 'Parameter balai_key wajib disertakan.',
+            'balai_key.string'   => 'Parameter balai_key harus berupa teks.',
+            'role.required'      => 'Parameter role wajib disertakan.',
+            'role.in'            => 'Role tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $data = [
+            'balai_key' => $balaiKey,
+            'role'      => $role,
+        ];
+
+        $result = $this->userService->listUserByRoleAndBalai($data);
+
+        if (!$result) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'terjadi kesalahan',
+                'data' => []
+            ], 400);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'berhasil menampilkan data',
+            'data' => $result
+        ], 200);
+    }
 }

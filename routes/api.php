@@ -149,3 +149,5 @@ Route::post('/pemeriksaan-rekonsiliasi/store-verifikasi-validasi', [PemeriksaanA
 Route::get('/eksternal/get-all-data-material', [EksternalAppController::class, 'getAllDataMaterial']);
 Route::get('/eksternal/get-all-data-peralatan', [EksternalAppController::class, 'getAllDataPeralatan']);
 Route::get('/eksternal/get-all-data-tenaga-kerja', [EksternalAppController::class, 'getAllTenagaKerja']);
+
+Route::get('/pj-balai/list_user', [UsersController::class, 'listByRoleAndByBalai']);
