@@ -76,7 +76,7 @@ class VerifySipastiJwt
         $rawRole  = Str::lower((string)($profile['role'] ?? ''));
         $roleName = match (true) {
             Str::contains($rawRole, 'kepala balai') => 'PJ Balai',
-            $rawRole === 'superadmn'                => 'superadmin',
+            $rawRole === 'superadmin'                => 'superadmin',
             default                                 => 'guest',
         };
         $roleId = $roleMap[$roleName] ?? $guestId;

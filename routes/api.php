@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Mail;
 //     return $request->user();
 // });
 
-Route::get('/hello-nginx-vm', function(){
+Route::get('/hello-nginx-vm', function () {
     return response()->json(['message' => "Hello World Nginx VM"]);
 });
 
@@ -80,11 +80,11 @@ Route::post('/perencanaan-data/adjust-identifikasi-kebutuhan', [PerencanaanDataC
 Route::post('/perencanaan-data/save-perencanaan-data/{id}', [PerencanaanDataController::class, 'changeStatusPerencanaan']);
 Route::get('/perencanaan-data/table-list-prencanaan-data', [PerencanaanDataController::class, 'tableListPerencanaan']);
 Route::get('/perencanaan-data/get-kuisioner-informasi-umum/{id}', [KuisionerController::class, 'getInformasiUmum']);
-Route::get('/perencanaan-data/get-kuisioner-material/{id}',[KuisionerController::class,'getMaterial']);
-Route::get('/perencanaan-data/get-kuisioner-peralatan/{id}',[KuisionerController::class,'getPeralatan']);
-Route::get('/perencanaan-data/get-kuisioner-tenaga-kerja/{id}',[KuisionerController::class,'getTenagaKerja']);
-Route::get('/perencanaan-data/get-kuisioner-short-list-vendor/{id}',[KuisionerController::class,'getShortListVendor']);
-Route::post('perencanaan-data/generate-pdf-sunting/{id}',[KuisionerController::class,'generatePdf']);
+Route::get('/perencanaan-data/get-kuisioner-material/{id}', [KuisionerController::class, 'getMaterial']);
+Route::get('/perencanaan-data/get-kuisioner-peralatan/{id}', [KuisionerController::class, 'getPeralatan']);
+Route::get('/perencanaan-data/get-kuisioner-tenaga-kerja/{id}', [KuisionerController::class, 'getTenagaKerja']);
+Route::get('/perencanaan-data/get-kuisioner-short-list-vendor/{id}', [KuisionerController::class, 'getShortListVendor']);
+Route::post('perencanaan-data/generate-pdf-sunting/{id}', [KuisionerController::class, 'generatePdf']);
 
 
 Route::get('/test-email', function () {
@@ -117,6 +117,7 @@ Route::post('/pengumpulan-data/store-team-teknis', [PengumpulanDataController::c
 
 Route::get('/pengumpulan-data/table-list-pengumpulan', [PengumpulanDataController::class, 'listPengumpulanData']);
 Route::get('/pengumpulan-data/list-user', [PengumpulanDataController::class, 'listUser']);
+Route::get('/pengumpulan-data/list-pengumpulan-by-nama', [PengumpulanDataController::class, "listPengumpulanByNama"]);
 
 Route::post('/pengumpulan-data/store-pengawas', [PengumpulanDataController::class, 'storePengawas']);
 Route::post('/pengumpulan-data/store-petugas-lapangan', [PengumpulanDataController::class, 'storePetugasLapangan']);

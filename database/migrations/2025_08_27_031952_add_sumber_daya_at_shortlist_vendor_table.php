@@ -13,9 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('shortlist_vendor', function (Blueprint $table) {
-            $table->string('sumber_daya')->nullable();
-        });
+        if(!Schema::hasColumn('shortlist_vendor','sumber_daya')){
+            Schema::table('shortlist_vendor', function (Blueprint $table) {
+                $table->string('sumber_daya')->nullable();
+            });
+        }
     }
 
     /**
