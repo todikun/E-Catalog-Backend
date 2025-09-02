@@ -16,6 +16,7 @@
         "maatwebsite/excel": "^1.1",
         "php-open-source-saver/jwt-auth": "^2.2",
         "phpoffice/phpspreadsheet": "^3.4",
+        "predis/predis": "^3.2",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
         "spatie/laravel-google-cloud-storage": "^2.3",

@@ -158,7 +158,7 @@ class UsersController extends Controller
             'role'      => $role,
         ], [
             'balai_key' => 'required|string|min:1',
-            'role'      => ['required', 'string', Rule::in(['pengawas', 'petugas lapangan', 'pengolah data'])],
+            'role'      => ['required', 'string', Rule::in(['pengawas', 'petugas lapangan', 'pengolah data', 'tim teknis balai','guest'])],
         ], [
             'balai_key.required' => 'Parameter balai_key wajib disertakan.',
             'balai_key.string'   => 'Parameter balai_key harus berupa teks.',
@@ -180,6 +180,99 @@ class UsersController extends Controller
         ];
 
         $result = $this->userService->listUserByRoleAndBalai($data);
+
+        if (!$result) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'terjadi kesalahan',
+                'data' => []
+            ], 400);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'berhasil menampilkan data',
+            'data' => $result
+        ], 200);
+    }
+
+    public function listByRoleAndByBalaiStatusStandby(Request $request)
+    {
+
+        $balaiKey = $request->query('balai_key');
+        $role = $request->query('role');
+
+        // ✅ Step 2: Validate both parameters
+        $validator = Validator::make([
+            'balai_key' => $balaiKey,
+            'role'      => $role,
+        ], [
+            'balai_key' => 'required|string|min:1',
+            'role'      => ['required', 'string', Rule::in(['pengawas', 'petugas lapangan', 'pengolah data', 'tim teknis balai'])],
+        ], [
+            'balai_key.required' => 'Parameter balai_key wajib disertakan.',
+            'balai_key.string'   => 'Parameter balai_key harus berupa teks.',
+            'role.required'      => 'Parameter role wajib disertakan.',
+            'role.in'            => 'Role tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $data = [
+            'balai_key' => $balaiKey,
+            'role'      => $role,
+        ];
+
+        $result = $this->userService->listUserByRoleAndBalaiStatusStandby($data);
+
+        if (!$result) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'terjadi kesalahan',
+                'data' => []
+            ], 400);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'berhasil menampilkan data',
+            'data' => $result
+        ], 200);
+    }
+
+    public function listUserByNamaBalai(Request $request)
+    {
+
+        $balaiKey = $request->query('balai_key');
+
+        $validator = Validator::make([
+            'balai_key' => $balaiKey,
+        ], [
+            'balai_key' => 'required|string|min:1',
+        ], [
+            'balai_key.required' => 'Parameter balai_key wajib disertakan.',
+            'balai_key.string'   => 'Parameter balai_key harus berupa teks.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $data = [
+            'balai_key' => $balaiKey,
+        ];
+
+        $result = $this->userService->listUserByNamaBalai($data);
 
         if (!$result) {
             return response()->json([

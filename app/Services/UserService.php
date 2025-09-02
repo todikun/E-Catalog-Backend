@@ -96,4 +96,86 @@ class UserService
 
         return $result;
     }
+
+    public function listUserByRoleAndBalaiStatusStandby($data)
+    {
+        $roleName = $data['role'];
+        $balaiKey = $data['balai_key'];
+
+        // Step 1: Get all eligible users (active, verified, correct role & balai)
+        $users = Users::select([
+            'users.id AS user_id',
+            'users.nama_lengkap',
+            'users.nrp',
+            'satuan_kerja.nama AS satuan_kerja_name',
+            'users.surat_penugasan_url as surat_penugasan'
+        ])
+            ->join('roles', 'users.id_roles', '=', 'roles.id')
+            ->join('satuan_balai_kerja', 'users.balai_kerja_id', '=', 'satuan_balai_kerja.id')
+            ->join('satuan_kerja', 'users.satuan_kerja_id', '=', 'satuan_kerja.id')
+            ->where('users.status', 'active')
+            ->whereNotNull('users.email_verified_at')
+            ->where('users.id_roles', '!=', 1) // exclude superadmin
+            ->where('roles.nama', $roleName) // filter by role name
+            ->where('satuan_balai_kerja.id', $balaiKey) // filter by balai
+            ->get();
+
+        // Step 2: Hanya ambil user yang belum ditugaskan
+        $result = $users->filter(function ($user) use ($roleName) {
+            if ($roleName === 'pengawas') {
+                return !PerencanaanData::whereJsonContains('pengawas_id', (string)$user->user_id)->exists();
+            } elseif ($roleName === 'pengolah data') {
+                return !PerencanaanData::whereJsonContains('pengolah_data_id', (string)$user->user_id)->exists();
+            } elseif ($roleName === 'petugas lapangan') {
+                return !PerencanaanData::whereJsonContains('petugas_lapangan_id', (string)$user->user_id)->exists();
+            }
+            return true;
+        })->map(function ($user) {
+            return [
+                'user_id' => $user->user_id,
+                'nama_lengkap' => $user->nama_lengkap,
+                'nrp' => $user->nrp,
+                'satuan_kerja_name' => $user->satuan_kerja_name,
+                'status_penugasan' => 'tidak ditugaskan',
+                'surat_penugasan' => $user->surat_penugasan
+            ];
+        })->values();
+
+        return $result;
+    }
+
+    public function listUserByNamaBalai($data)
+    {
+        $balaiKey = $data['balai_key'];
+
+        $users = Users::select([
+            'users.id AS user_id',
+            'users.nama_lengkap',
+            'users.nrp',
+            'satuan_kerja.nama AS satuan_kerja_name',
+            'users.surat_penugasan_url as surat_penugasan',
+            'roles.nama as role'
+        ])
+            ->join('roles', 'users.id_roles', '=', 'roles.id')
+            ->join('satuan_balai_kerja', 'users.balai_kerja_id', '=', 'satuan_balai_kerja.id')
+            ->join('satuan_kerja', 'users.satuan_kerja_id', '=', 'satuan_kerja.id')
+            ->where('users.status', 'active')
+            ->whereNotNull('users.email_verified_at')
+            ->where('users.id_roles', '!=', 1) // exclude superadmin
+            ->where('satuan_balai_kerja.id', $balaiKey) // filter by balai
+            ->get();
+
+        $result = $users->map(function ($user) {
+            return [
+                'user_id' => $user->user_id,
+                'nama_lengkap' => $user->nama_lengkap,
+                'nrp' => $user->nrp,
+                'satuan_kerja_name' => $user->satuan_kerja_name,
+                'role' => $user->role,
+                'surat_penugasan' => $user->surat_penugasan
+            ];
+        })->values();
+
+        return $result;
+    }
 }

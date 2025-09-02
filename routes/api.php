@@ -150,4 +150,6 @@ Route::get('/eksternal/get-all-data-material', [EksternalAppController::class, '
 Route::get('/eksternal/get-all-data-peralatan', [EksternalAppController::class, 'getAllDataPeralatan']);
 Route::get('/eksternal/get-all-data-tenaga-kerja', [EksternalAppController::class, 'getAllTenagaKerja']);
 
-Route::get('/pj-balai/list_user', [UsersController::class, 'listByRoleAndByBalai']);
+Route::get('/pj-balai/list-user', [UsersController::class, 'listByRoleAndByBalai']);
+Route::get('/pj-balai/list-user-standby', [UsersController::class, 'listByRoleAndByBalaiStatusStandby']);
+Route::get('/pj-balai/list-user-by-balai', [UsersController::class, 'listUserByNamaBalai']);
