@@ -59,7 +59,6 @@ class PengumpulanDataService
 
     public function listUserPengumpulan($role)
     {
-
         $query = Users::select('id AS user_id', 'nama_lengkap')
             ->where('status', 'active')
             ->where('id_roles', $role)
@@ -77,9 +76,8 @@ class PengumpulanDataService
                 $exists = PerencanaanData::whereJsonContains('petugas_lapangan_id', (string) $item->user_id)->exists();
             }
 
-            // keep hanya user yang TIDAK ditugaskan
             return !$exists;
-        })->values(); // reset index
+        })->values();
 
         return $query;
     }
@@ -177,7 +175,6 @@ class PengumpulanDataService
         $array = explode(',', $idTable);
         $arrayPerson = array_map('intval', $array);
 
-        // Todo: Check if the user is exists
         $userExists = Users::whereIn('id', $array)->get();
         $countUserExists = $userExists->count();
 
@@ -239,16 +236,24 @@ class PengumpulanDataService
 
     public function generateLinkKuisioner($id)
     {
-        $data = [
+        $expireDays = (int) config('constants.SURVEY_LINK_EXPIRE_DAYS', 10);
+
+        $now = now();
+        $payload = [
             'shortlist_id' => $id,
-            'timestamp' => now()->timestamp
+            'timestamp'    => $now->timestamp,
+            'expired_at'   => $now->copy()->addDays($expireDays)->timestamp,
         ];
 
-        $encryptedToken = Crypt::encryptString(json_encode($data));
+        $encryptedToken = Crypt::encryptString(json_encode($payload));
 
         $url = URL::to('/api/survey-kuisioner/get-data-survey') . '?token=' . urlencode($encryptedToken);
 
-        return $url;
+        return [
+            'url'        => $url,
+            'token'      => $encryptedToken,
+            'expired_at' => $payload['expired_at'],
+        ];
     }
 
     private function getPengawasPetugasLapangan($shortlistId)
@@ -373,13 +378,11 @@ class PengumpulanDataService
 
     private function getIdentifikasiSurvey($table, $id)
     {
-        // Decode JSON and ensure it's an array
         $idArray = json_decode($id, true);
         if (!is_array($idArray) || empty($idArray)) {
-            return collect(); // Return an empty collection if $id is invalid or empty
+            return collect();
         }
 
-        // Check for existence in related surveys
         $checkMaterial = MaterialSurvey::whereIn('material_id', $idArray)->exists();
         $checkPeralatan = PeralatanSurvey::whereIn('peralatan_id', $idArray)->exists();
         $checkTenagaKerja = TenagaKerjaSurvey::whereIn('tenaga_kerja_id', $idArray)->exists();
@@ -464,9 +467,8 @@ class PengumpulanDataService
             }
         }
 
-        return collect(); // Default return for unsupported $table
+        return collect();
     }
-
 
     public function getEntriData($shortlistId)
     {
@@ -498,7 +500,7 @@ class PengumpulanDataService
             ->first();
 
         if (!$vendor) {
-            return null; // or throw exception
+            return null;
         }
 
         $keteranganPetugas = $this->getKeteranganPetugas($vendor->petugas_lapangan_id);
@@ -663,7 +665,6 @@ class PengumpulanDataService
 
     public function updateShortlistVendor($shortlistId, $vendorId, $data)
     {
-
         return ShortlistVendor::updateOrCreate(
             [
                 'shortlist_vendor_id' => $shortlistId,
