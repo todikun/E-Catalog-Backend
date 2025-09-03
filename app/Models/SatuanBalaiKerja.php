@@ -11,4 +11,6 @@ class SatuanBalaiKerja extends Model
 
     protected $table = 'satuan_balai_kerja';
     protected $fillable = ['nama', 'unor_id'];
+
+    const UPDATED_AT = 'edited_at';
 }

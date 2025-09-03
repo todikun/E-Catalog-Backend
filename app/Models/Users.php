@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Authenticatable as AuthAuthenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Database\Eloquent\Model;
 
-
-class Users extends Authenticatable implements MustVerifyEmail
+class Users extends Model implements JWTSubject, AuthenticatableContract
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, AuthAuthenticatable;
 
-    protected $fillable = ['id_roles', 'nama_lengkap', 'no_handphone', 'nik', 'nrp', 'satuan_kerja_id', 'balai_kerja_id', 'status'];
+
+    protected $fillable = ['id_roles', 'nama_lengkap', 'no_handphone', 'nik', 'nrp', 'nip', 'satuan_kerja_id', 'balai_kerja_id', 'status', 'user_id_sipasti', 'email',];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -29,8 +31,23 @@ class Users extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(SatuanBalaiKerja::class, 'balai_kerja_id');
     }
 
-    public function account()
+    public function role(){
+        return $this->belongsTo(Roles::class,'id_roles', 'id');
+    }
+
+     // Get the id from user_id
+    public function getJWTIdentifier()
     {
-        return $this->hasOne(Accounts::class, 'user_id', 'id');
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+    public function getEmailForVerification()
+    {
+        return $this->email;
     }
 }

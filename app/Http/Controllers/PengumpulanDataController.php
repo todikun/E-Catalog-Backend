@@ -47,8 +47,22 @@ class PengumpulanDataController extends Controller
                 $filePath = $request->file('sk_penugasan')->store('sk_penugasan');
             }
 
-            $arrayAnggota = explode(',', $request->input('anggota'));
+            $ketua = (int) $request->input('ketua_team');
+            $sekretaris = (int) $request->input('sekretaris_team');
+            $arrayPetinggi = array_merge([$ketua], [$sekretaris]);
+
+            $arrayAnggota = array_merge(explode(',', $request->input('anggota')));
             $arrayAnggota = array_map('intval', $arrayAnggota);
+
+            $duplicates = array_intersect($arrayPetinggi, $arrayAnggota);
+
+            if (!empty($duplicates)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Ketua atau Sekretaris tidak boleh rangkap menjadi anggota',
+                    'error' => "Duplicate Data"
+                ], 400);
+            }
 
             $data = [
                 'nama_team' => $request->input('nama_team'),
@@ -127,6 +141,34 @@ class PengumpulanDataController extends Controller
         }
     }
 
+    public function listPengumpulanByNama(Request $request)
+    {
+        $namaBalai = $request->query('nama_balai');
+
+        if (empty($namaBalai)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => config('constants.ERROR_MESSAGE_GET'),
+                'data' => []
+            ], 400);
+        }
+
+        $data = $this->perencanaanDataService->listPerencanaanDataByNamaBalai($namaBalai);
+        if (!$data || $data->isEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'No data found for the given nama_balai',
+                'data' => []
+            ], 404); // ← 200 OK, but empty
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => config('constants.SUCCESS_MESSAGE_GET'),
+            'data' => $data
+        ]);
+    }
+
     public function listPengumpulanData()
     {
         $status = [
@@ -152,6 +194,7 @@ class PengumpulanDataController extends Controller
         }
     }
 
+    // TODO: Change to Google Cloud Storage Bucket for Storing the sk_penugasan
     public function storePengawas(Request $request)
     {
         $rules = [
@@ -172,6 +215,7 @@ class PengumpulanDataController extends Controller
             $data = [];
 
             if ($request->hasFile('sk_penugasan')) {
+                // Change it using Google Cloud Storage Bucket
                 $filePath = $request->file('sk_penugasan')->store('public/sk_penugasan');
             }
 
@@ -202,20 +246,29 @@ class PengumpulanDataController extends Controller
     public function listUser(Request $request)
     {
         $roles = $this->pengumpulanDataService->getListRoles($request['role']);
+
+        if (empty($roles)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => config('constants.ERROR_MESSAGE_GET'),
+                'error' => 'Role tidak terdefinisi'
+            ], 400);
+        }
+
         $getData = $this->pengumpulanDataService->listUserPengumpulan($roles);
         if ($getData) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $getData
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
+            ], 200);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 400);
     }
 
     public function storePetugasLapangan(Request $request)
@@ -386,13 +439,20 @@ class PengumpulanDataController extends Controller
 
         try {
             $assign = $this->pengumpulanDataService->assignPenugasan('pengawas', $request->id_user, $request->pengumpulan_data_id);
-            if ($assign) {
+
+            if (empty($assign)) {
                 return response()->json([
-                    'status' => 'success',
-                    'message' => config('constants.SUCCESS_MESSAGE_SAVE'),
+                    'status' => 'gagal',
+                    'message' => config('constants.ERROR_MESSAGE_SAVE'),
                     'data' => $assign
-                ]);
+                ], 400);
             }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => config('constants.SUCCESS_MESSAGE_SAVE'),
+                'data' => $assign
+            ], 200);
         } catch (\Exception $th) {
             return response()->json([
                 'status' => 'error',
@@ -507,37 +567,38 @@ class PengumpulanDataController extends Controller
     public function listVendorByPaket($id)
     {
         $list = $this->pengumpulanDataService->listVendorByPerencanaanId($id);
-        if (isset($list)) {
+        if ($list->isNotEmpty()) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $list
             ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 404);
     }
 
     public function getEntriData($id)
     {
+        // ID from the shortlist_vendor
         $data = $this->pengumpulanDataService->getEntriData($id);
-        if (isset($data)) {
+        if ($data) {
             return response()->json([
                 'status' => 'success',
                 'message' => config('constants.SUCCESS_MESSAGE_GET'),
                 'data' => $data
             ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => config('constants.ERROR_MESSAGE_GET'),
-                'data' => []
-            ]);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => config('constants.ERROR_MESSAGE_GET'),
+            'data' => []
+        ], 404);
     }
 
     public function entriDataSave(Request $request)

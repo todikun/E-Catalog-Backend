@@ -43,7 +43,7 @@ class EksternalService
         foreach ($data as $value) {
             $responseData[] = [
                 'provinsi' => $value->provinsi,
-                'kaupaten/kota' => $value->kabupaten_kota,
+                'kabupaten/kota' => $value->kabupaten_kota,
                 'jenis_material' => $value->jenis_material,
                 'spesifikasi' => $value->spesifikasi,
                 'ukuran' => $value->ukuran,
@@ -96,7 +96,7 @@ class EksternalService
         foreach ($data as $value) {
             $responseData[] = [
                 'provinsi' => $value->provinsi,
-                'kaupaten/kota' => $value->kabupaten_kota,
+                'kabupaten/kota' => $value->kabupaten_kota,
                 'jenis_peralatan' => $value->jenis_peralatan,
                 'kapasitas' => $value->kapasitas,
                 'daya' => $value->daya,

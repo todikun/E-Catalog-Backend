@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('nik')->change();
-            $table->string('no_handphone')->change();
-            $table->dropColumn('nip');
+        Schema::table('satuan_balai_kerja', function (Blueprint $table) {
+
+            // TODO: 1. Ubah column menjadi nullable
+            $table->unsignedBigInteger('unor_id')->nullable(true)->change();
         });
     }
 
@@ -27,9 +27,9 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table){
-            $table->integer('nik')->change();
-            $table->string('nip');
+        Schema::table('satuan_balai_kerja', function (Blueprint $table) {
+            // TODO: 1. Ubah column menjadi not null
+            $table->unsignedBigInteger('unor_id')->nullable(false)->change();
         });
     }
 };

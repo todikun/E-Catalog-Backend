@@ -13,13 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('satuan_kerja', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama');
-            $table->timestamp('created_at')->nullable();
-            $table->timestamp('updated_at')->nullable();
-            $table->timestamp('deleted_at')->nullable();
-        });
+        if(!Schema::hasColumn('shortlist_vendor','sumber_daya')){
+            Schema::table('shortlist_vendor', function (Blueprint $table) {
+                $table->string('sumber_daya')->nullable();
+            });
+        }
     }
 
     /**
@@ -29,6 +27,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('satuan_kerja');
+        Schema::table('shortlist_vendor', function (Blueprint $table) {
+            $table->dropColumn('sumber_daya');
+        });
     }
 };
