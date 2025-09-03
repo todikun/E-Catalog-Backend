@@ -16,12 +16,12 @@ use App\Models\Roles;
 use App\Models\ShortlistVendor;
 use App\Models\TeamTeknisBalai;
 use App\Models\TenagaKerja;
-use App\Models\TenagaKerjaModel;
 use App\Models\TenagaKerjaSurvey;
 use App\Models\Users;
 use App\Models\VerifikasiValidasi;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
@@ -29,15 +29,31 @@ class PengumpulanDataService
 {
     public function storeTeamPengumpulanData($data)
     {
-        $teamPengumpulanData = new TeamTeknisBalai();
-        $teamPengumpulanData->nama_team = $data['nama_team'];
-        $teamPengumpulanData->user_id_ketua = $data['ketua_team'];
-        $teamPengumpulanData->user_id_sekretaris = $data['sekretaris_team'];
-        $teamPengumpulanData->user_id_anggota = $data['anggota'];
-        $teamPengumpulanData->url_sk_penugasan = $data['sk_penugasan'];
-        $teamPengumpulanData->save();
+        return DB::transaction(function () use ($data) {
+            // 1) Buat Team
+            $team = TeamTeknisBalai::create([
+                'nama_team'          => $data['nama_team'],
+                'user_id_ketua'      => $data['ketua_team'] ?? null,
+                'user_id_sekretaris' => $data['sekretaris_team'] ?? null,
+                'user_id_anggota'    => $data["anggota"],                   // pastikan cast array di model
+                'url_sk_penugasan'   => $data['sk_penugasan'],  // konsisten dengan kolom di DB
+            ]);
 
-        return $teamPengumpulanData;
+            // 2) Update role semua user yang ditugaskan
+            $userIds = array_filter(array_merge(
+                [$data['ketua_team'] ?? null, $data['sekretaris_team'] ?? null],
+                $data["anggota"]
+            ));
+            dd($userIds);
+
+            if (!empty($userIds)) {
+                Users::whereIn('id', $userIds)->update([
+                    'id_roles' => 2, // gunakan integer, sesuaikan ID role yang benar
+                ]);
+            }
+
+            return $team;
+        });
     }
 
     public function getAllTeamPengumpulanData()

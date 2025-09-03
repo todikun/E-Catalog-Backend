@@ -148,6 +148,7 @@ class UserService
     {
         $balaiKey = $data['balai_key'];
 
+        // TODO: get data by balai and id_roles = 9
         $users = Users::select([
             'users.id AS user_id',
             'users.nama_lengkap',
@@ -163,6 +164,7 @@ class UserService
             ->whereNotNull('users.email_verified_at')
             ->where('users.id_roles', '!=', 1) // exclude superadmin
             ->where('satuan_balai_kerja.id', $balaiKey) // filter by balai
+            ->where('users.id_roles', '=', '9') // filter by role 'guest'
             ->get();
 
         $result = $users->map(function ($user) {
